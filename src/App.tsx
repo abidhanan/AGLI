@@ -22,15 +22,18 @@ import {
   Upload,
   Users,
   Video,
+  X,
   Zap,
 } from 'lucide-react'
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ChangeEvent,
   type ReactNode,
 } from 'react'
+import { createPortal } from 'react-dom'
 import './App.css'
 import { normalizeImportedContent, parseCsv } from './lib/csv'
 import { generateDraft as buildDraft } from './lib/drafts'
@@ -43,6 +46,7 @@ import {
 import type { ContentItem, DraftOutput, PatternSummary, Platform, RankedContent } from './types'
 
 type DraftTab = 'Post Copy' | 'Hooks' | 'Video Outline' | 'Hashtags'
+type PanelKey = 'help' | 'notifications' | 'filters' | 'dateRange' | 'profile' | 'sources' | 'shortcuts' | 'patterns'
 type PageKey =
   | 'Overview'
   | 'Research'
@@ -101,6 +105,13 @@ interface AppSettings {
   storeLocally: boolean
 }
 
+interface WorkspaceProfile {
+  email: string
+  name: string
+  role: string
+  timezone: string
+}
+
 const platforms: Platform[] = ['LinkedIn', 'YouTube', 'Instagram', 'TikTok']
 const platformOptions: PlatformFilter[] = ['All Platforms', ...platforms]
 const icpOptions = ['HR & L&D Professionals', 'Team Leads', 'Managers', 'People Ops']
@@ -149,6 +160,216 @@ const defaultSettings: AppSettings = {
   storeLocally: true,
 }
 
+const defaultWorkspaceProfile: WorkspaceProfile = {
+  email: 'content@amsterdamgamelab.nl',
+  name: 'AGLI workspace',
+  role: 'Content strategist',
+  timezone: 'Europe/Amsterdam',
+}
+
+const demoContentItems: ContentItem[] = [
+  {
+    id: 'demo-linkedin-soft-skills',
+    platform: 'LinkedIn',
+    title: 'Stop calling it soft skills.',
+    creator: 'Pro Actief',
+    url: 'https://example.com/linkedin-soft-skills',
+    topic: 'Leadership',
+    angle: 'Reframe communication habits as measurable team infrastructure.',
+    hook: 'Stop calling it soft skills.',
+    hookType: 'Contrarian reframe',
+    format: 'Text post',
+    visualStyle: 'Plain text with bold opening line',
+    lengthSeconds: 0,
+    audience: 'HR & L&D Professionals',
+    views: 52000,
+    engagements: 1200,
+    comments: 86,
+    shares: 148,
+    date: '2026-06-18',
+    sourceQuality: 'imported',
+    verificationNote: 'Scenario seed for demo flow. Replace with verified metric export before client use.',
+  },
+  {
+    id: 'demo-youtube-learning-culture',
+    platform: 'YouTube',
+    title: 'Zo bouw je een leercultuur die blijft.',
+    creator: 'AGL Learning',
+    url: 'https://example.com/youtube-learning-culture',
+    topic: 'Learning culture',
+    angle: 'Show a practical team ritual instead of abstract L&D theory.',
+    hook: 'Most learning culture plans fail because they skip the weekly ritual.',
+    hookType: 'Mistake reveal',
+    format: 'Short explainer video',
+    visualStyle: 'Facilitator plus tabletop close-ups',
+    lengthSeconds: 58,
+    audience: 'HR & L&D Professionals',
+    views: 34000,
+    engagements: 980,
+    comments: 72,
+    shares: 120,
+    date: '2026-06-15',
+    sourceQuality: 'imported',
+    verificationNote: 'Scenario seed for demo flow. Replace with verified metric export before client use.',
+  },
+  {
+    id: 'demo-instagram-stronger-talks',
+    platform: 'Instagram',
+    title: '5 vragen voor sterkere gesprekken',
+    creator: 'Pro Actief',
+    url: 'https://example.com/instagram-questions',
+    topic: 'Team reflection',
+    angle: 'Give managers saveable prompts for safer team conversations.',
+    hook: 'Save these five questions before your next team check-in.',
+    hookType: 'Saveable list',
+    format: 'Carousel',
+    visualStyle: 'Light cards with teal highlight',
+    lengthSeconds: 0,
+    audience: 'Managers',
+    views: 29000,
+    engagements: 1100,
+    comments: 64,
+    shares: 210,
+    date: '2026-06-17',
+    sourceQuality: 'imported',
+    verificationNote: 'Scenario seed for demo flow. Replace with verified metric export before client use.',
+  },
+  {
+    id: 'demo-linkedin-listening',
+    platform: 'LinkedIn',
+    title: 'Leiderschap begint bij luisteren.',
+    creator: 'Amsterdam Game Lab',
+    url: 'https://example.com/linkedin-listening',
+    topic: 'Leadership',
+    angle: 'Connect listening behavior to stress prevention before problems escalate.',
+    hook: 'Leadership starts before the big decision.',
+    hookType: 'Small moment',
+    format: 'Text post',
+    visualStyle: 'Short paragraphs with one question',
+    lengthSeconds: 0,
+    audience: 'Team Leads',
+    views: 26000,
+    engagements: 842,
+    comments: 51,
+    shares: 96,
+    date: '2026-06-12',
+    sourceQuality: 'imported',
+    verificationNote: 'Scenario seed for demo flow. Replace with verified metric export before client use.',
+  },
+  {
+    id: 'demo-tiktok-feedback',
+    platform: 'TikTok',
+    title: '3 manieren om feedback veilig te maken',
+    creator: 'Pro Actief',
+    url: 'https://example.com/tiktok-feedback',
+    topic: 'Feedback safety',
+    angle: 'Use fast myth/fact captions around difficult team feedback.',
+    hook: 'If feedback feels unsafe, your team will edit the truth.',
+    hookType: 'Problem-first',
+    format: 'Short vertical video',
+    visualStyle: 'Talking head with bold captions',
+    lengthSeconds: 41,
+    audience: 'Managers',
+    views: 41000,
+    engagements: 2300,
+    comments: 118,
+    shares: 390,
+    date: '2026-06-16',
+    sourceQuality: 'imported',
+    verificationNote: 'Scenario seed for demo flow. Replace with verified metric export before client use.',
+  },
+  {
+    id: 'demo-linkedin-flow',
+    platform: 'LinkedIn',
+    title: 'Waar focus, flow en resultaat samenkomen',
+    creator: 'Amsterdam Game Lab',
+    url: 'https://example.com/linkedin-flow',
+    topic: 'Workplace wellbeing',
+    angle: 'Position wellbeing as better team operating conditions, not an extra perk.',
+    hook: 'Focus is not a personal productivity trick. It is a team condition.',
+    hookType: 'Reframe',
+    format: 'Article',
+    visualStyle: 'Header image plus structured bullets',
+    lengthSeconds: 0,
+    audience: 'People Ops',
+    views: 18000,
+    engagements: 620,
+    comments: 39,
+    shares: 88,
+    date: '2026-06-10',
+    sourceQuality: 'imported',
+    verificationNote: 'Scenario seed for demo flow. Replace with verified metric export before client use.',
+  },
+  {
+    id: 'demo-instagram-checkin',
+    platform: 'Instagram',
+    title: 'Team check-in template',
+    creator: 'AGL Learning',
+    url: 'https://example.com/instagram-checkin',
+    topic: 'Team reflection',
+    angle: 'Turn a check-in template into a saveable visual tool.',
+    hook: 'Use this check-in when the team says everything is fine.',
+    hookType: 'Template',
+    format: 'Carousel',
+    visualStyle: 'Template cards with real meeting table photo',
+    lengthSeconds: 0,
+    audience: 'Team Leads',
+    views: 22000,
+    engagements: 780,
+    comments: 46,
+    shares: 170,
+    date: '2026-06-09',
+    sourceQuality: 'imported',
+    verificationNote: 'Scenario seed for demo flow. Replace with verified metric export before client use.',
+  },
+  {
+    id: 'demo-tiktok-team-sport',
+    platform: 'TikTok',
+    title: 'Learning is a team sport',
+    creator: 'AGL Learning',
+    url: 'https://example.com/tiktok-team-sport',
+    topic: 'Learning culture',
+    angle: 'Show a quick team exercise that exposes communication gaps.',
+    hook: 'Try this one-minute exercise before your next retrospective.',
+    hookType: 'Try this',
+    format: 'Short vertical video',
+    visualStyle: 'Hands-on activity with captions',
+    lengthSeconds: 36,
+    audience: 'L&D Professionals',
+    views: 24000,
+    engagements: 1100,
+    comments: 77,
+    shares: 205,
+    date: '2026-06-08',
+    sourceQuality: 'imported',
+    verificationNote: 'Scenario seed for demo flow. Replace with verified metric export before client use.',
+  },
+]
+
+const demoCalendarItems: CalendarItem[] = [
+  { id: 'demo-cal-linkedin', date: '2026-06-28', platform: 'LinkedIn', title: 'Leadership starts before the big decision', status: 'Ready for review' },
+  { id: 'demo-cal-instagram', date: '2026-06-30', platform: 'Instagram', title: 'Team check-in carousel', status: 'Needs brand pass' },
+  { id: 'demo-cal-youtube', date: '2026-07-02', platform: 'YouTube', title: 'Pro Actief workshop short', status: 'Needs footage' },
+]
+
+const demoLibraryItems: LibraryItem[] = [
+  { id: 'demo-lib-draft', title: 'LinkedIn draft - leadership begins with listening', type: 'Draft', status: 'Needs human review', audience: 'Team Leads' },
+  { id: 'demo-lib-carousel', title: '5 questions carousel outline', type: 'Carousel outline', status: 'Ready for design', audience: 'Managers' },
+  { id: 'demo-lib-video', title: 'IGLO tabletop B-roll shot list', type: 'Video asset list', status: 'Needs footage check', audience: 'L&D Professionals' },
+]
+
+const demoSavedSearches: SavedSearch[] = [
+  { id: 'demo-search-hr', query: 'HR & L&D Professionals | Awareness | Professional & Warm', platforms: 'All Platforms', results: 8, savedAt: '2026-06-18T09:00:00.000Z' },
+  { id: 'demo-search-tiktok', query: 'Managers | Workshop Demand | Direct', platforms: 'TikTok', results: 2, savedAt: '2026-06-19T11:30:00.000Z' },
+  { id: 'demo-search-linkedin', query: 'Team Leads | Thought Leadership | Practical', platforms: 'LinkedIn', results: 3, savedAt: '2026-06-20T14:15:00.000Z' },
+]
+
+const demoTeamMembers: TeamMember[] = [
+  { id: 'demo-team-jamie', name: 'Jamie Bakker', role: 'Content Strategist', responsibility: 'Owns research brief and calendar', status: 'Active' },
+  { id: 'demo-team-mila', name: 'Mila de Vries', role: 'Facilitator', responsibility: 'Reviews Pro Actief brand fit', status: 'Active' },
+  { id: 'demo-team-noah', name: 'Noah Janssen', role: 'Marketing Lead', responsibility: 'Approves publishing and export', status: 'Reviewing' },
+]
+
 function App() {
   const [activePage, setActivePage] = useState<PageKey>('Research')
   const [icp, setIcp] = useStoredState('agli:icp', icpOptions[0])
@@ -164,16 +385,18 @@ function App() {
   const [draftOutput, setDraftOutput] = useStoredState<DraftOutput | null>('agli:draftOutput', null)
   const [cta, setCta] = useStoredState('agli:cta', '')
   const [notice, setNotice] = useState('No fabricated claims')
-  const [contentItems, setContentItems] = useStoredState<ContentItem[]>('agli:contentItems', [])
-  const [calendarItems, setCalendarItems] = useStoredState<CalendarItem[]>('agli:calendarItems', [])
-  const [libraryItems, setLibraryItems] = useStoredState<LibraryItem[]>('agli:libraryItems', [])
-  const [savedSearches, setSavedSearches] = useStoredState<SavedSearch[]>('agli:savedSearches', [])
-  const [teamMembers, setTeamMembers] = useStoredState<TeamMember[]>('agli:teamMembers', [])
+  const [contentItems, setContentItems] = useStoredState<ContentItem[]>('agli:contentItems', demoContentItems)
+  const [calendarItems, setCalendarItems] = useStoredState<CalendarItem[]>('agli:calendarItems', demoCalendarItems)
+  const [libraryItems, setLibraryItems] = useStoredState<LibraryItem[]>('agli:libraryItems', demoLibraryItems)
+  const [savedSearches, setSavedSearches] = useStoredState<SavedSearch[]>('agli:savedSearches', demoSavedSearches)
+  const [teamMembers, setTeamMembers] = useStoredState<TeamMember[]>('agli:teamMembers', demoTeamMembers)
   const [brandRules, setBrandRules] = useStoredState<BrandRule[]>('agli:brandRules', defaultBrandRules)
   const [settings, setSettings] = useStoredState<AppSettings>('agli:settings', defaultSettings)
+  const [workspaceProfile, setWorkspaceProfile] = useStoredState<WorkspaceProfile>('agli:workspaceProfile', defaultWorkspaceProfile)
   const [selectedContentId, setSelectedContentId] = useState('')
   const [tablePage, setTablePage] = useState(1)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
+  const [activePanel, setActivePanel] = useState<PanelKey | null>(null)
 
   const rankedContent = useMemo(() => rankContent(contentItems), [contentItems])
   const filteredRanked = useMemo(
@@ -195,8 +418,32 @@ function App() {
     setTablePage(1)
   }, [platformFilter, contentItems.length])
 
+  useEffect(() => {
+    const seedVersion = window.localStorage.getItem('agli:demoSeedVersion')
+    if (contentItems.length === 0 && seedVersion !== 'interactive-v1' && seedVersion !== 'cleared') {
+      loadDemoWorkspace()
+    }
+  })
+
   function action(message: string) {
     setNotice(message)
+  }
+
+  function openPanel(panel: PanelKey) {
+    setActivePanel(panel)
+    setNotice(`${panelLabel(panel)} ready`)
+  }
+
+  function loadDemoWorkspace() {
+    setContentItems(demoContentItems)
+    setCalendarItems(demoCalendarItems)
+    setLibraryItems(demoLibraryItems)
+    setSavedSearches(demoSavedSearches)
+    setTeamMembers(demoTeamMembers)
+    setBrandRules(defaultBrandRules)
+    setSelectedContentId(demoContentItems[0]?.id ?? '')
+    window.localStorage.setItem('agli:demoSeedVersion', 'interactive-v1')
+    action('Demo scenario loaded')
   }
 
   function handleCsvUpload(event: ChangeEvent<HTMLInputElement>) {
@@ -262,8 +509,8 @@ function App() {
 
     setDraftOutput(output)
     setDraftText(output.postCopy)
-    setCta('Invite the team to review whether Pro Actief fits their context.')
-    action('Draft generated from imported research')
+    setCta(buildCta(objective, draftPlatform))
+    action(`${draftPlatform} draft generated for ${objective}`)
   }
 
   function saveDraft() {
@@ -368,6 +615,7 @@ function App() {
   }
 
   function clearWorkspace() {
+    window.localStorage.setItem('agli:demoSeedVersion', 'cleared')
     setContentItems([])
     setCalendarItems([])
     setLibraryItems([])
@@ -425,28 +673,41 @@ function App() {
         <div className="sidebar-user-wrap">
           {profileMenuOpen ? (
             <div className="profile-menu">
-              <button onClick={() => action('Workspace profile opened')} type="button">
-                Workspace profile
-              </button>
               <button
                 onClick={() => {
-                  setActivePage('Team')
+                  openPanel('profile')
                   setProfileMenuOpen(false)
-                  action('Team workspace opened')
                 }}
                 type="button"
               >
-                Team workspace
+                Update profile
               </button>
               <button
                 onClick={() => {
-                  setActivePage('Settings')
+                  openPanel('sources')
                   setProfileMenuOpen(false)
-                  action('Settings opened')
                 }}
                 type="button"
               >
-                Settings
+                Data sources
+              </button>
+              <button
+                onClick={() => {
+                  openPanel('shortcuts')
+                  setProfileMenuOpen(false)
+                }}
+                type="button"
+              >
+                Shortcuts
+              </button>
+              <button
+                onClick={() => {
+                  loadDemoWorkspace()
+                  setProfileMenuOpen(false)
+                }}
+                type="button"
+              >
+                Load demo scenario
               </button>
               <button
                 onClick={() => {
@@ -467,7 +728,7 @@ function App() {
           >
             <span>AG</span>
             <div>
-              <strong>AGLI workspace</strong>
+              <strong>{workspaceProfile.name}</strong>
               <small>{contentItems.length} research rows</small>
             </div>
             <ChevronDown size={17} />
@@ -483,10 +744,10 @@ function App() {
             <span>Verified metrics only. Import platform exports before publishing.</span>
             <strong>{notice}</strong>
             <i />
-            <button aria-label="Help" onClick={() => action('Use CSV columns from the template')} type="button">
+            <button aria-label="Help" onClick={() => openPanel('help')} type="button">
               <CircleHelp size={21} />
             </button>
-            <button aria-label="Notifications" onClick={() => action('No new notifications')} type="button">
+            <button aria-label="Notifications" onClick={() => openPanel('notifications')} type="button">
               <Bell size={21} />
             </button>
           </div>
@@ -508,6 +769,7 @@ function App() {
             generateDraft={generateDraft}
             icp={icp}
             objective={objective}
+            openPanel={openPanel}
             onImportCsv={handleCsvUpload}
             page={tablePage}
             platformFilter={platformFilter}
@@ -558,6 +820,25 @@ function App() {
             teamMembers={teamMembers}
           />
         )}
+        {activePanel ? (
+          <UtilityPanel
+            activePanel={activePanel}
+            brandRules={brandRules}
+            close={() => setActivePanel(null)}
+            contentItems={contentItems}
+            exportAnalysis={exportAnalysis}
+            filteredRanked={filteredRanked}
+            icp={icp}
+            loadDemoWorkspace={loadDemoWorkspace}
+            objective={objective}
+            platformFilter={platformFilter}
+            savedSearches={savedSearches}
+            setWorkspaceProfile={setWorkspaceProfile}
+            summary={summary}
+            tone={tone}
+            workspaceProfile={workspaceProfile}
+          />
+        ) : null}
       </main>
     </div>
   )
@@ -578,6 +859,7 @@ function ResearchPage({
   generateDraft,
   icp,
   objective,
+  openPanel,
   onImportCsv,
   page,
   platformFilter,
@@ -612,6 +894,7 @@ function ResearchPage({
   generateDraft: () => void
   icp: string
   objective: string
+  openPanel: (panel: PanelKey) => void
   onImportCsv: (event: ChangeEvent<HTMLInputElement>) => void
   page: number
   platformFilter: PlatformFilter
@@ -645,11 +928,11 @@ function ResearchPage({
         <SelectBox label="Platform" onSelect={(value) => setPlatformFilter(value as PlatformFilter)} options={platformOptions} value={platformFilter} />
         <SelectBox label="Objective" onSelect={setObjective} options={objectiveOptions} value={objective} />
         <SelectBox label="Tone" onSelect={setTone} options={toneOptions} value={tone} />
-        <button className="date-button" onClick={() => action('Date range follows imported rows')} type="button">
+        <button className="date-button" onClick={() => openPanel('dateRange')} type="button">
           <CalendarDays size={17} />
           {dateLabel}
         </button>
-        <button className="filter-button" onClick={() => action('Filters applied')} type="button">
+        <button className="filter-button" onClick={() => openPanel('filters')} type="button">
           <Search size={17} />
           Filters
         </button>
@@ -793,7 +1076,7 @@ function ResearchPage({
                         <li key={item}>{item}</li>
                       ))}
                     </ol>
-                    <button className="link-button" onClick={() => action(`${column.title} detail opened`)} type="button">
+                    <button className="link-button" onClick={() => openPanel('patterns')} type="button">
                       {column.link}
                     </button>
                   </div>
@@ -947,6 +1230,199 @@ function DraftTabContent({
         <p key={item}>{item}</p>
       ))}
     </div>
+  )
+}
+
+function UtilityPanel({
+  activePanel,
+  brandRules,
+  close,
+  contentItems,
+  exportAnalysis,
+  filteredRanked,
+  icp,
+  loadDemoWorkspace,
+  objective,
+  platformFilter,
+  savedSearches,
+  setWorkspaceProfile,
+  summary,
+  tone,
+  workspaceProfile,
+}: {
+  activePanel: PanelKey
+  brandRules: BrandRule[]
+  close: () => void
+  contentItems: ContentItem[]
+  exportAnalysis: () => void
+  filteredRanked: RankedContent[]
+  icp: string
+  loadDemoWorkspace: () => void
+  objective: string
+  platformFilter: PlatformFilter
+  savedSearches: SavedSearch[]
+  setWorkspaceProfile: (updater: (current: WorkspaceProfile) => WorkspaceProfile) => void
+  summary: PatternSummary
+  tone: string
+  workspaceProfile: WorkspaceProfile
+}) {
+  const topRows = filteredRanked.slice(0, 4)
+  const panelTitle = panelLabel(activePanel)
+
+  return (
+    <div className="utility-panel-shell" role="dialog" aria-label={panelTitle}>
+      <div className="utility-panel">
+        <div className="utility-panel-head">
+          <div>
+            <span>AGLI workspace</span>
+            <h2>{panelTitle}</h2>
+          </div>
+          <button aria-label="Close panel" onClick={close} type="button">
+            <X size={18} />
+          </button>
+        </div>
+
+        {activePanel === 'profile' ? (
+          <div className="panel-form">
+            <label>
+              Name
+              <input
+                value={workspaceProfile.name}
+                onChange={(event) =>
+                  setWorkspaceProfile((current) => ({ ...current, name: event.target.value }))
+                }
+              />
+            </label>
+            <label>
+              Role
+              <input
+                value={workspaceProfile.role}
+                onChange={(event) =>
+                  setWorkspaceProfile((current) => ({ ...current, role: event.target.value }))
+                }
+              />
+            </label>
+            <label>
+              Email
+              <input
+                value={workspaceProfile.email}
+                onChange={(event) =>
+                  setWorkspaceProfile((current) => ({ ...current, email: event.target.value }))
+                }
+              />
+            </label>
+            <label>
+              Timezone
+              <input
+                value={workspaceProfile.timezone}
+                onChange={(event) =>
+                  setWorkspaceProfile((current) => ({ ...current, timezone: event.target.value }))
+                }
+              />
+            </label>
+            <button className="compact-action" onClick={close} type="button">
+              Save profile
+            </button>
+          </div>
+        ) : null}
+
+        {activePanel === 'help' ? (
+          <div className="panel-list">
+            {[
+              ['1. Pick a scenario', 'Use ICP, platform, objective, and tone dropdowns to reshape ranking and draft output.'],
+              ['2. Select a winning row', 'Click a row in Research to make it the primary reference for Draft Studio.'],
+              ['3. Generate and review', 'Draft Studio writes a human-review draft, then Calendar and Library store the next steps.'],
+              ['4. Export honestly', 'Export analysis includes rows, pattern summary, draft, and guardrails for the deck.'],
+            ].map(([title, text]) => (
+              <PanelItem key={title} text={text} title={title} />
+            ))}
+          </div>
+        ) : null}
+
+        {activePanel === 'notifications' ? (
+          <div className="panel-list">
+            <PanelItem text={`${contentItems.length} scenario rows are available for ranking.`} title="Research data ready" />
+            <PanelItem text={`${savedSearches.length} saved discovery flows can be reused.`} title="Saved searches" />
+            <PanelItem text={`${brandRules.length} brand rules are active before publishing.`} title="Brand guardrails" />
+          </div>
+        ) : null}
+
+        {activePanel === 'filters' ? (
+          <div className="panel-list">
+            <PanelItem text={icp} title="Active ICP" />
+            <PanelItem text={platformFilter} title="Active platform" />
+            <PanelItem text={objective} title="Active objective" />
+            <PanelItem text={tone} title="Active tone" />
+            <PanelItem text={`${filteredRanked.length} rows match this scenario.`} title="Scenario result" />
+          </div>
+        ) : null}
+
+        {activePanel === 'dateRange' ? (
+          <div className="panel-list">
+            <PanelItem text={dateRangeLabel(filteredRanked)} title="Research window" />
+            <PanelItem text="Dates come from imported or scenario rows. Change platform/ICP filters to reshape the active window." title="How it works" />
+          </div>
+        ) : null}
+
+        {activePanel === 'sources' ? (
+          <div className="panel-list">
+            <PanelItem text="CSV import, manual research, VidIQ, TubeBuddy, TikTok Creative Center, YouTube Studio, LinkedIn analytics, and Instagram insights." title="Supported sources" />
+            <PanelItem text={`${contentItems.length} rows currently loaded. Replace scenario rows with verified exports before final publishing.`} title="Loaded rows" />
+            <button className="compact-action" onClick={loadDemoWorkspace} type="button">
+              Reload demo scenario
+            </button>
+          </div>
+        ) : null}
+
+        {activePanel === 'shortcuts' ? (
+          <div className="panel-list">
+            <PanelItem text="Research -> select row -> Generate draft -> Save draft -> Add to Calendar." title="Fast demo flow" />
+            <PanelItem text="Platform dropdown changes the ranked table and the strongest patterns." title="Scenario switch" />
+            <PanelItem text="Reports and Pattern Engine update from the same filtered research rows." title="Integrated pages" />
+          </div>
+        ) : null}
+
+        {activePanel === 'patterns' ? (
+          <div className="panel-list">
+            <PanelItem text={`${summary.sampleSize} rows in active pattern sample.`} title="Sample size" />
+            <PanelItem text={summary.topHooks.map((item) => item.label).join(', ') || 'No hooks yet'} title="Hook evidence" />
+            <PanelItem text={summary.topTopics.map((item) => item.label).join(', ') || 'No topics yet'} title="Topic evidence" />
+            <PanelItem text={summary.recommendedLength} title="Length guidance" />
+          </div>
+        ) : null}
+
+        {topRows.length > 0 ? (
+          <div className="panel-mini-table">
+            <strong>Top scenario rows</strong>
+            {topRows.map((row) => (
+              <div key={row.id}>
+                <span>{row.platform}</span>
+                <p>{row.title}</p>
+                <em>{row.score}</em>
+              </div>
+            ))}
+          </div>
+        ) : null}
+
+        <div className="utility-panel-actions">
+          <button className="secondary-action" onClick={close} type="button">
+            Close
+          </button>
+          <button className="calendar-action standalone" onClick={exportAnalysis} type="button">
+            Export analysis
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function PanelItem({ text, title }: { text: string; title: string }) {
+  return (
+    <section className="panel-item">
+      <strong>{title}</strong>
+      <p>{text}</p>
+    </section>
   )
 }
 
@@ -1707,7 +2183,32 @@ function SelectBox({
   value: string
 }) {
   const [open, setOpen] = useState(false)
+  const [menuPosition, setMenuPosition] = useState({ left: 0, top: 0, width: 0 })
+  const buttonRef = useRef<HTMLButtonElement | null>(null)
   const menuOptions = [...new Set(options ?? [])]
+
+  function toggleMenu() {
+    if (menuOptions.length === 0 || !onSelect) {
+      onClick?.()
+      return
+    }
+
+    const rect = buttonRef.current?.getBoundingClientRect()
+    if (rect) {
+      const menuHeight = Math.min(260, menuOptions.length * 40 + 12)
+      const width = Math.max(rect.width, 180)
+      const left = Math.min(Math.max(12, rect.left), window.innerWidth - width - 12)
+      const preferredTop = rect.bottom + 6
+      const top =
+        preferredTop + menuHeight > window.innerHeight - 12
+          ? Math.max(12, rect.top - menuHeight - 6)
+          : preferredTop
+
+      setMenuPosition({ left, top, width })
+    }
+
+    setOpen((current) => !current)
+  }
 
   return (
     <div className="select-box">
@@ -1716,21 +2217,20 @@ function SelectBox({
         aria-expanded={open}
         aria-label={value}
         className="select-control"
-        onClick={() => {
-          if (menuOptions.length > 0 && onSelect) {
-            setOpen((current) => !current)
-            return
-          }
-          onClick?.()
-        }}
+        onClick={toggleMenu}
+        ref={buttonRef}
         type="button"
       >
         {icon}
         <strong>{value}</strong>
         <ChevronDown size={17} />
       </button>
-      {open && menuOptions.length > 0 ? (
-        <div className="select-menu">
+      {open && menuOptions.length > 0
+        ? createPortal(
+        <div
+          className="select-menu select-menu-floating"
+          style={{ left: menuPosition.left, top: menuPosition.top, width: menuPosition.width }}
+        >
           {menuOptions.map((option) => (
             <button
               className={option === value ? 'active' : ''}
@@ -1744,8 +2244,10 @@ function SelectBox({
               {option}
             </button>
           ))}
-        </div>
-      ) : null}
+        </div>,
+        document.body,
+      )
+        : null}
     </div>
   )
 }
@@ -1759,6 +2261,28 @@ function platformLabel(platform: Platform) {
   if (platform === 'YouTube') return 'YT'
   if (platform === 'Instagram') return 'IG'
   return 'TT'
+}
+
+function panelLabel(panel: PanelKey) {
+  const labels: Record<PanelKey, string> = {
+    dateRange: 'Research date range',
+    filters: 'Advanced filters',
+    help: 'How AGLI works',
+    notifications: 'Workspace notifications',
+    patterns: 'Pattern evidence',
+    profile: 'Update profile',
+    shortcuts: 'Demo shortcuts',
+    sources: 'Data sources',
+  }
+  return labels[panel]
+}
+
+function buildCta(objective: string, platform: Platform) {
+  if (objective === 'Discovery Call') return 'Book a short Pro Actief fit check with Amsterdam Game Lab.'
+  if (objective === 'Workshop Demand') return 'Invite your team lead to test this exercise in the next workshop.'
+  if (objective === 'Thought Leadership') return 'Save this question for your next leadership conversation.'
+  if (platform === 'TikTok' || platform === 'Instagram') return 'Save this for your next team check-in.'
+  return 'Share one small team habit that makes stress easier to discuss.'
 }
 
 function ContentType({ format }: { format: string }) {

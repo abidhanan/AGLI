@@ -35,7 +35,7 @@ For each item, capture:
 ## 2. Import Data
 
 Open AGLI and click **Import CSV**. Use `public/sample-import.csv` as the template.
-The app starts empty, so the ranking and pattern engine only use rows you import.
+AGLI includes scenario rows so the demo can be shown immediately. Replace those rows with verified imports before presenting research as evidence.
 
 ## 3. Read the Ranking
 

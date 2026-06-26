@@ -36,7 +36,7 @@ Show:
 
 AGLI does not pretend restricted platform data is freely available. It supports manual or tool-assisted imports from VidIQ, TubeBuddy, TikTok Creative Center, LinkedIn analytics, Instagram insights, and YouTube Studio.
 
-The app starts empty and uses only imported rows. It warns users not to publish fabricated claims.
+The app includes scenario rows for the live demo and warns users to replace them with verified imports before treating outputs as market evidence.
 
 ## Slide 7 - Scoring Logic
 

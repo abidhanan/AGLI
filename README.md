@@ -9,7 +9,7 @@ The tool is designed for the hackathon case: category creation, low search deman
 - Ranks imported LinkedIn, YouTube, Instagram, and TikTok content by views, engagement rate, shares, comments, recency, and source quality.
 - Surfaces pattern insights: hooks, topics, formats, lengths, and visual styles.
 - Generates draft post copy, hook options, and video outlines for Amsterdam Game Lab and Pro Actief.
-- Starts empty and only ranks user-imported or manually created records.
+- Ships with an interactive scenario seed so the hackathon demo works immediately, then accepts real CSV imports.
 - Exports analysis JSON and includes a reproducible command-line pattern report.
 
 ## Stack
@@ -45,8 +45,8 @@ This writes `dist-analysis/pattern-report.md` from `data/content.csv` or `data/c
 
 ## Important Honesty Rules
 
-- The app does not preload performance data.
-- Do not present unverified imported rows as actual market research.
+- The built-in scenario rows are for product demo flow only.
+- Replace scenario rows with verified imports before presenting market research as evidence.
 - Do not invent client results, ROI, medical claims, quotes, or case studies.
 - Generated output is a draft for human review, not auto-published content.
 
