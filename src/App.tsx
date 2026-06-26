@@ -1,689 +1,504 @@
 import {
-  AlertTriangle,
-  BadgeCheck,
-  Brain,
-  CheckCircle2,
-  ClipboardCheck,
+  Bell,
+  Bookmark,
+  CalendarDays,
+  ChevronDown,
+  CircleHelp,
   Copy,
-  Download,
-  ExternalLink,
   FileText,
-  Gauge,
-  Link2,
-  PlaySquare,
+  Folder,
+  Home,
+  Image as ImageIcon,
+  Info,
+  LineChart,
+  MessageSquare,
+  PencilLine,
   Search,
+  Settings,
   ShieldCheck,
-  SlidersHorizontal,
   Sparkles,
   Table2,
-  Upload,
-  WandSparkles,
+  Tags,
+  Users,
+  Video,
+  Zap,
 } from 'lucide-react'
-import { useMemo, useState, type ChangeEvent, type ReactNode } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import './App.css'
-import seedRows from './data/seedContent.json'
-import { normalizeImportedContent, parseCsv } from './lib/csv'
-import { generateDraft } from './lib/drafts'
-import {
-  calculatePatternSummary,
-  formatCompactNumber,
-  formatPercent,
-  rankContent,
-} from './lib/scoring'
-import type { ContentItem, DraftInputs, PatternGroup, Platform, RankedContent } from './types'
 
-const seedContent = seedRows as ContentItem[]
-const platformOptions: Array<Platform | 'All'> = ['All', 'LinkedIn', 'YouTube', 'Instagram', 'TikTok']
-const audienceOptions = ['All', 'HR leads', 'L&D managers', 'Team leads', 'Managers']
-const objectiveOptions = [
-  'Build awareness',
-  'Book a discovery conversation',
-  'Educate HR buyers',
-  'Support workshop sales',
-]
-const toneOptions = ['Credible warm', 'Practical', 'Calm expert', 'Direct']
+type Platform = 'LinkedIn' | 'YouTube' | 'Instagram' | 'TikTok'
+type Confidence = 'Medium' | 'Low'
 
-const initialDraftInputs: DraftInputs = {
-  platform: 'LinkedIn',
-  format: 'Text post',
-  objective: 'Book a discovery conversation',
-  audience: 'HR leads',
-  tone: 'Credible warm',
-  productAngle: 'Use game-based reflection to make stress visible before it becomes burnout.',
-  selectedPattern: 'Problem-first',
+interface PrototypeRow {
+  id: number
+  title: string
+  platform: Platform
+  account: string
+  type: 'Text Post' | 'Video' | 'Carousel' | 'Article'
+  score: number
+  engagement: string
+  views: string
+  published: string
+  confidence: Confidence
 }
 
+const rows: PrototypeRow[] = [
+  {
+    id: 1,
+    title: 'Stop calling it soft skills.',
+    platform: 'LinkedIn',
+    account: 'Pro Actief',
+    type: 'Text Post',
+    score: 86,
+    engagement: '1.2K',
+    views: '52K',
+    published: 'May 16, 2025',
+    confidence: 'Medium',
+  },
+  {
+    id: 2,
+    title: 'Zo bouw je een leercultuur die blijft.',
+    platform: 'YouTube',
+    account: 'AGL Learning',
+    type: 'Video',
+    score: 82,
+    engagement: '980',
+    views: '34K',
+    published: 'May 12, 2025',
+    confidence: 'Medium',
+  },
+  {
+    id: 3,
+    title: '5 vragen voor sterkere gesprekken',
+    platform: 'Instagram',
+    account: 'Pro Actief',
+    type: 'Carousel',
+    score: 79,
+    engagement: '1.1K',
+    views: '29K',
+    published: 'May 14, 2025',
+    confidence: 'Medium',
+  },
+  {
+    id: 4,
+    title: 'Leiderschap begint bij luisteren.',
+    platform: 'LinkedIn',
+    account: 'AGL',
+    type: 'Text Post',
+    score: 76,
+    engagement: '842',
+    views: '26K',
+    published: 'May 10, 2025',
+    confidence: 'Medium',
+  },
+  {
+    id: 5,
+    title: '3 manieren om feedback veilig te maken',
+    platform: 'TikTok',
+    account: 'Pro Actief',
+    type: 'Video',
+    score: 74,
+    engagement: '2.3K',
+    views: '41K',
+    published: 'May 11, 2025',
+    confidence: 'Low',
+  },
+  {
+    id: 6,
+    title: 'Waar focus, flow en resultaat samenkomen',
+    platform: 'LinkedIn',
+    account: 'AGL',
+    type: 'Article',
+    score: 71,
+    engagement: '620',
+    views: '18K',
+    published: 'May 9, 2025',
+    confidence: 'Low',
+  },
+  {
+    id: 7,
+    title: 'Team check-in template',
+    platform: 'Instagram',
+    account: 'AGL Learning',
+    type: 'Carousel',
+    score: 68,
+    engagement: '780',
+    views: '22K',
+    published: 'May 8, 2025',
+    confidence: 'Low',
+  },
+  {
+    id: 8,
+    title: 'Learning is a team sport',
+    platform: 'TikTok',
+    account: 'AGL Learning',
+    type: 'Video',
+    score: 66,
+    engagement: '1.1K',
+    views: '24K',
+    published: 'May 7, 2025',
+    confidence: 'Low',
+  },
+]
+
+const postCopy = `Sterk leiderschap begint niet bij de grote beslissingen,
+maar bij de kleine momenten van aandacht.
+
+Luisteren. Doorvragen. Ruimte geven.
+
+Daar bouwen teams aan vertrouwen, eigenaarschap en groei.
+
+Welke kleine gewoonte maakt voor jou het grootste verschil
+in je team?`
+
+const patternColumns = [
+  {
+    icon: <Zap size={20} />,
+    title: 'Top Hooks',
+    items: [
+      'Stop doing X.',
+      'Zo bouw je...',
+      '3 manieren om...',
+      'Wat werkgevers vaak missen...',
+      'Leiderschap begint bij...',
+    ],
+    link: 'View more (18)',
+  },
+  {
+    icon: <Tags size={20} />,
+    title: 'Top Topics',
+    items: ['Leercultuur', 'Leiderschap', 'Feedback & gesprekken', 'Skills & ontwikkeling', 'Teamwerk & samenwerking'],
+    link: 'View more (21)',
+  },
+  {
+    icon: <Table2 size={20} />,
+    title: 'Top Formats',
+    items: ['Text Post              34%', 'Short Video            28%', 'Carousel               22%', 'Article                10%', 'Live/Long Form          6%'],
+    link: 'View more (6)',
+  },
+  {
+    icon: <CalendarDays size={20} />,
+    title: 'Ideal Length',
+    items: ['Text: 80-140 words', 'Video: 30-60 sec', 'Carousel: 5-7 slides', 'Article: 800-1,200 words'],
+    link: 'View guidance',
+  },
+  {
+    icon: <ImageIcon size={20} />,
+    title: 'Visual Style',
+    items: ['Clean & minimal', 'Real people', 'On-brand teal accents', 'Bold text overlays', 'Light backgrounds'],
+    link: 'View examples',
+  },
+]
+
 function App() {
-  const [useDemoData, setUseDemoData] = useState(true)
-  const [importedRows, setImportedRows] = useState<ContentItem[]>([])
-  const [platformFilter, setPlatformFilter] = useState<Platform | 'All'>('All')
-  const [audienceFilter, setAudienceFilter] = useState('All')
-  const [searchQuery, setSearchQuery] = useState('')
-  const [draftInputs, setDraftInputs] = useState<DraftInputs>(initialDraftInputs)
-  const [selectedId, setSelectedId] = useState(seedContent[0].id)
-  const [importStatus, setImportStatus] = useState('Ready for verified CSV imports')
-  const [copyStatus, setCopyStatus] = useState('Copy draft')
+  const [draftText, setDraftText] = useState(postCopy)
+  const [cta, setCta] = useState('Deel je ervaring in de comments!')
+  const wordCount = useMemo(() => draftText.trim().split(/\s+/).filter(Boolean).length, [draftText])
 
-  const sourceRows = useMemo(
-    () => (useDemoData ? [...seedContent, ...importedRows] : importedRows),
-    [importedRows, useDemoData],
-  )
-
-  const filteredRows = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase()
-    return sourceRows.filter((item) => {
-      const matchesPlatform = platformFilter === 'All' || item.platform === platformFilter
-      const matchesAudience = audienceFilter === 'All' || item.audience === audienceFilter
-      const searchable = [
-        item.title,
-        item.topic,
-        item.angle,
-        item.hook,
-        item.hookType,
-        item.format,
-        item.visualStyle,
-      ]
-        .join(' ')
-        .toLowerCase()
-      const matchesSearch = query.length === 0 || searchable.includes(query)
-      return matchesPlatform && matchesAudience && matchesSearch
-    })
-  }, [audienceFilter, platformFilter, searchQuery, sourceRows])
-
-  const rankedRows = useMemo(() => rankContent(filteredRows), [filteredRows])
-  const patternSummary = useMemo(() => calculatePatternSummary(filteredRows), [filteredRows])
-  const selectedContent = rankedRows.find((item) => item.id === selectedId) ?? rankedRows[0]
-  const referenceItems = rankedRows.slice(0, 3)
-  const draft = useMemo(
-    () => generateDraft(draftInputs, patternSummary, referenceItems),
-    [draftInputs, patternSummary, referenceItems],
-  )
-
-  const metricValues = useMemo(() => {
-    const verifiedCount = sourceRows.filter((item) => item.sourceQuality !== 'demo').length
-    const topPlatform =
-      rankedRows[0]?.platform ?? (platformFilter === 'All' ? 'No data' : platformFilter)
-    const medianRate = formatPercent(patternSummary.medianEngagementRate)
-
-    return {
-      total: rankedRows.length,
-      verifiedCount,
-      topPlatform,
-      medianRate,
-    }
-  }, [patternSummary.medianEngagementRate, platformFilter, rankedRows, sourceRows])
-
-  function updateDraftInput<Key extends keyof DraftInputs>(key: Key, value: DraftInputs[Key]) {
-    setDraftInputs((current) => ({
-      ...current,
-      [key]: value,
-    }))
-  }
-
-  function usePattern(item: RankedContent) {
-    setSelectedId(item.id)
-    setDraftInputs((current) => ({
-      ...current,
-      platform: item.platform,
-      format: item.format,
-      audience: item.audience,
-      productAngle: item.angle,
-      selectedPattern: item.hookType,
-    }))
-    document.getElementById('draft-studio')?.scrollIntoView({ behavior: 'smooth' })
-  }
-
-  function handleCsvUpload(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0]
-    if (!file) return
-
-    const reader = new FileReader()
-    reader.onload = () => {
-      const rows = parseCsv(String(reader.result))
-      const normalizedRows = rows.map(normalizeImportedContent)
-      setImportedRows((current) => [...normalizedRows, ...current])
-      setImportStatus(
-        normalizedRows.length > 0
-          ? `Imported ${normalizedRows.length} rows. Verify URLs before client use.`
-          : 'No rows found. Check the CSV header names.',
-      )
-    }
-    reader.readAsText(file)
+  function generateDraft() {
+    setDraftText(postCopy)
+    setCta('Plan een korte teamsessie met Pro Actief.')
   }
 
   async function copyDraft() {
-    await navigator.clipboard.writeText(draft.markdown)
-    setCopyStatus('Copied')
-    window.setTimeout(() => setCopyStatus('Copy draft'), 1500)
-  }
-
-  function downloadAnalysis() {
-    const payload = {
-      project: 'AGLI - Amsterdam Game Lab Intelligence',
-      generatedAt: new Date().toISOString(),
-      filters: {
-        platform: platformFilter,
-        audience: audienceFilter,
-        query: searchQuery,
-        demoDataIncluded: useDemoData,
-      },
-      rankedRows,
-      patternSummary,
-      draft,
-      guardrails: [
-        'Use verified metrics only in external presentations.',
-        'Do not publish demo seed rows as evidence.',
-        'Do not invent client results, ROI, medical claims, or case studies.',
-      ],
-    }
-
-    const blob = new Blob([JSON.stringify(payload, null, 2)], {
-      type: 'application/json',
-    })
-    const url = URL.createObjectURL(blob)
-    const anchor = document.createElement('a')
-    anchor.href = url
-    anchor.download = 'agli-analysis-export.json'
-    anchor.click()
-    URL.revokeObjectURL(url)
+    await navigator.clipboard.writeText(`${draftText}\n\n${cta}`)
   }
 
   return (
-    <div className="app-shell">
+    <div className="prototype-shell">
       <aside className="sidebar">
-        <div className="brand">
-          <div className="brand-mark">AI</div>
-          <div>
-            <strong>AGLI</strong>
-            <span>Amsterdam Game Lab Intelligence</span>
-          </div>
+        <div className="brand-block">
+          <strong>AGLI</strong>
+          <span>Amsterdam Game Lab Intelligence</span>
         </div>
 
-        <nav className="nav-list" aria-label="App sections">
-          <a href="#research">
-            <Table2 size={17} />
-            Research
-          </a>
-          <a href="#patterns">
-            <Brain size={17} />
-            Pattern Engine
-          </a>
-          <a href="#draft-studio">
-            <WandSparkles size={17} />
-            Draft Studio
-          </a>
-          <a href="#workflow">
-            <ClipboardCheck size={17} />
-            Workflow
-          </a>
+        <nav className="nav-list" aria-label="Main navigation">
+          <NavItem icon={<Home size={18} />} label="Overview" />
+          <NavItem active icon={<Search size={19} />} label="Research" />
+          <NavItem icon={<Table2 size={18} />} label="Pattern Engine" />
+          <NavItem icon={<PencilLine size={18} />} label="Draft Studio" />
+          <NavItem icon={<CalendarDays size={18} />} label="Calendar" />
+          <NavItem icon={<Folder size={18} />} label="Content Library" />
+          <NavItem icon={<LineChart size={18} />} label="Reports" />
+          <NavItem icon={<Bookmark size={18} />} label="Saved Searches" />
         </nav>
 
-        <div className="sidebar-note">
-          <ShieldCheck size={18} />
-          <p>
-            Built for draft creation only. Every metric and claim needs human review before
-            publishing.
-          </p>
+        <div className="nav-divider" />
+
+        <nav className="nav-list nav-secondary" aria-label="Settings navigation">
+          <NavItem icon={<MessageSquare size={18} />} label="Brand Voice" />
+          <NavItem icon={<Users size={18} />} label="Team" />
+          <NavItem icon={<Settings size={18} />} label="Settings" />
+        </nav>
+
+        <div className="sidebar-user">
+          <span>JB</span>
+          <div>
+            <strong>Jamie Bakker</strong>
+            <small>Content Strategist</small>
+          </div>
+          <ChevronDown size={17} />
         </div>
       </aside>
 
-      <main className="app-main">
-        <header className="topbar">
-          <div>
-            <p className="section-label">Content intelligence for Pro Actief</p>
-            <h1>Find what works, then write from the pattern.</h1>
-          </div>
-
-          <div className="topbar-actions">
-            <button className="secondary-button" type="button" onClick={downloadAnalysis}>
-              <Download size={16} />
-              Export analysis
-            </button>
-            <label className="primary-button">
-              <Upload size={16} />
-              Import CSV
-              <input accept=".csv" type="file" onChange={handleCsvUpload} />
-            </label>
+      <main className="research-page">
+        <header className="research-topbar">
+          <h1>Research</h1>
+          <div className="status-strip">
+            <ShieldCheck size={21} />
+            <span>Verified metrics only. Replace demo data with verified metrics before publishing.</span>
+            <strong>No fabricated claims</strong>
+            <i />
+            <CircleHelp size={21} />
+            <Bell size={21} />
           </div>
         </header>
 
-        <section className="guardrail">
-          <AlertTriangle size={19} />
-          <div>
-            <strong>Verified metrics only</strong>
-            <span>
-              Demo seed rows are synthetic pattern examples. Import VidIQ, TubeBuddy, platform
-              analytics, TikTok Creative Center, or manual research exports before client use.
-            </span>
-          </div>
-          <label className="toggle">
-            <input
-              checked={useDemoData}
-              type="checkbox"
-              onChange={(event) => setUseDemoData(event.target.checked)}
-            />
-            Show demo seed
-          </label>
-        </section>
-
-        <section className="metric-grid" aria-label="Research metrics">
-          <MetricTile
-            caption="Rows after filters"
-            icon={<Gauge size={19} />}
-            label="Ranked content"
-            value={String(metricValues.total)}
-          />
-          <MetricTile
-            caption="Imported or verified"
-            icon={<BadgeCheck size={19} />}
-            label="Evidence rows"
-            value={String(metricValues.verifiedCount)}
-          />
-          <MetricTile
-            caption="Best current signal"
-            icon={<Sparkles size={19} />}
-            label="Top platform"
-            value={metricValues.topPlatform}
-          />
-          <MetricTile
-            caption="Across ranked rows"
-            icon={<CheckCircle2 size={19} />}
-            label="Median ER"
-            value={metricValues.medianRate}
-          />
-        </section>
-
-        <section className="filter-panel" aria-label="Research filters">
-          <div className="search-box">
+        <section className="filter-row" aria-label="Research filters">
+          <SelectBox label="ICP" value="HR & L&D Professionals" />
+          <SelectBox label="Platform" value="All Platforms" />
+          <SelectBox label="Objective" value="Awareness" />
+          <SelectBox label="Tone" value="Professional & Warm" />
+          <button className="date-button" type="button">
+            <CalendarDays size={17} />
+            May 5 - May 18, 2025
+          </button>
+          <button className="filter-button" type="button">
             <Search size={17} />
-            <input
-              aria-label="Search content"
-              placeholder="Search topics, hooks, angles, formats..."
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-            />
-          </div>
-
-          <SelectControl
-            label="Platform"
-            value={platformFilter}
-            options={platformOptions}
-            onChange={(value) => setPlatformFilter(value as Platform | 'All')}
-          />
-          <SelectControl
-            label="ICP"
-            value={audienceFilter}
-            options={audienceOptions}
-            onChange={setAudienceFilter}
-          />
-          <SelectControl
-            label="Objective"
-            value={draftInputs.objective}
-            options={objectiveOptions}
-            onChange={(value) => updateDraftInput('objective', value)}
-          />
-          <SelectControl
-            label="Tone"
-            value={draftInputs.tone}
-            options={toneOptions}
-            onChange={(value) => updateDraftInput('tone', value)}
-          />
+            Filters
+          </button>
+          <button className="save-button" type="button">
+            <Bookmark size={17} />
+            Save search
+          </button>
         </section>
 
-        <section className="content-grid" id="research">
-          <ResearchTable
-            rankedRows={rankedRows}
-            selectedId={selectedContent?.id}
-            onSelect={setSelectedId}
-            onUsePattern={usePattern}
-          />
-
-          <aside className="pattern-panel" id="patterns">
-            <div className="panel-heading">
-              <div>
-                <p className="section-label">Pattern Engine</p>
-                <h2>What is earning attention</h2>
+        <div className="workspace-grid">
+          <div className="left-stack">
+            <section className="content-panel">
+              <div className="panel-title">
+                <div>
+                  <h2>Top Performing Content</h2>
+                  <span>(by traction)</span>
+                  <Info size={16} />
+                </div>
               </div>
-              <SlidersHorizontal size={19} />
-            </div>
 
-            <div className="pattern-summary">
-              <div>
-                <span>Sample</span>
-                <strong>{patternSummary.sampleSize}</strong>
+              <div className="table-frame">
+                <table className="prototype-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Title</th>
+                      <th>Platform</th>
+                      <th>Account</th>
+                      <th>Type</th>
+                      <th>Traction Score ↓</th>
+                      <th>Engagement <span>(Demo)</span></th>
+                      <th>Views <span>(Demo)</span></th>
+                      <th>Published</th>
+                      <th>Confidence</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.map((row) => (
+                      <tr key={row.id}>
+                        <td>{row.id}</td>
+                        <td className="title-cell">{row.title}</td>
+                        <td>
+                          <PlatformBadge platform={row.platform} />
+                        </td>
+                        <td>{row.account}</td>
+                        <td>
+                          <ContentType type={row.type} />
+                        </td>
+                        <td className="score-cell">{row.score}</td>
+                        <td>{row.engagement}</td>
+                        <td>{row.views}</td>
+                        <td>{row.published}</td>
+                        <td>
+                          <span className={`confidence ${row.confidence.toLowerCase()}`}>
+                            {row.confidence}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-              <div>
-                <span>Median ER</span>
-                <strong>{formatPercent(patternSummary.medianEngagementRate)}</strong>
-              </div>
-              <div>
-                <span>Target length</span>
-                <strong>{patternSummary.recommendedLength}</strong>
-              </div>
-            </div>
 
-            <PatternList groups={patternSummary.topHooks} title="Hooks" />
-            <PatternList groups={patternSummary.topTopics} title="Topics" />
-            <PatternList groups={patternSummary.topFormats} title="Formats" />
-            <PatternList groups={patternSummary.topVisualStyles} title="Visual styles" />
-          </aside>
-        </section>
-
-        <section className="draft-layout" id="draft-studio">
-          <div className="draft-controls">
-            <div className="panel-heading">
-              <div>
-                <p className="section-label">Draft Studio</p>
-                <h2>On-brand draft generator</h2>
+              <div className="table-footer">
+                <span>Showing 1-8 of 240 results</span>
+                <div className="pagination">
+                  <button type="button">‹</button>
+                  <button className="active" type="button">1</button>
+                  <button type="button">2</button>
+                  <button type="button">3</button>
+                  <button type="button">4</button>
+                  <button type="button">5</button>
+                  <span>...</span>
+                  <button type="button">30</button>
+                  <button type="button">›</button>
+                </div>
               </div>
-              <WandSparkles size={20} />
-            </div>
+            </section>
 
-            <SelectControl
-              label="Output platform"
-              value={draftInputs.platform}
-              options={platformOptions.filter((option) => option !== 'All')}
-              onChange={(value) => updateDraftInput('platform', value as Platform)}
-            />
-            <SelectControl
-              label="Pattern"
-              value={draftInputs.selectedPattern}
-              options={[
-                draftInputs.selectedPattern,
-                ...patternSummary.topHooks.map((group) => group.label),
-              ].filter((value, index, values) => values.indexOf(value) === index)}
-              onChange={(value) => updateDraftInput('selectedPattern', value)}
-            />
-            <label className="field">
-              <span>Product angle</span>
-              <textarea
-                value={draftInputs.productAngle}
-                onChange={(event) => updateDraftInput('productAngle', event.target.value)}
-              />
-            </label>
-
-            {selectedContent ? (
-              <div className="selected-pattern">
-                <span>Inspired by selected row</span>
-                <strong>{selectedContent.title}</strong>
-                <small>{selectedContent.verificationNote}</small>
+            <section className="insights-panel" id="patterns">
+              <div className="insights-title">
+                <h2>Pattern Insights</h2>
+                <span>(AI summary from top content)</span>
+                <Info size={16} />
               </div>
-            ) : null}
+
+              <div className="insight-columns">
+                {patternColumns.map((column) => (
+                  <div className="insight-column" key={column.title}>
+                    <div className="insight-heading">
+                      {column.icon}
+                      <strong>{column.title}</strong>
+                    </div>
+                    <ol>
+                      {column.items.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ol>
+                    <a href="#patterns">{column.link}</a>
+                  </div>
+                ))}
+              </div>
+
+              <div className="insight-disclaimer">
+                <Info size={17} />
+                <span>These are AI-derived patterns from demo data. Replace with verified metrics before publishing.</span>
+              </div>
+            </section>
           </div>
 
-          <div className="draft-output">
-            <div className="draft-toolbar">
-              <div>
-                <p className="section-label">Generated draft</p>
-                <h2>{draftInputs.platform} concept</h2>
-              </div>
-              <button className="secondary-button" type="button" onClick={copyDraft}>
-                <Copy size={16} />
-                {copyStatus}
+          <aside className="draft-card" id="draft-studio">
+            <div className="draft-header">
+              <h2>Draft Studio</h2>
+              <button className="generate-button" type="button" onClick={generateDraft}>
+                <Sparkles size={16} />
+                Generate draft
               </button>
             </div>
 
-            <div className="hook-bank">
-              {draft.hooks.map((hook) => (
-                <p key={hook}>{hook}</p>
-              ))}
+            <div className="draft-tabs">
+              <button className="active" type="button">Post Copy</button>
+              <button type="button">Hooks</button>
+              <button type="button">Video Outline</button>
+              <button type="button">Hashtags</button>
             </div>
 
-            <article className="post-copy">
-              {draft.postCopy.split('\n').map((line, index) =>
-                line ? <p key={`${line}-${index}`}>{line}</p> : <br key={`line-${index}`} />,
-              )}
-            </article>
-
-            <div className="script-grid">
-              {draft.videoScript.map((line) => (
-                <div className="script-row" key={line.time}>
-                  <strong>{line.time}</strong>
-                  <span>{line.scene}</span>
-                  <p>{line.voiceover}</p>
-                  <em>{line.onScreenText}</em>
-                </div>
-              ))}
+            <div className="draft-form-grid">
+              <SelectBox label="Brand / Client" value="Pro Actief" />
+              <SelectBox label="Content Pillar" value="Leiderschap" />
+              <SelectBox icon={<span className="mini-linkedin">in</span>} label="Platform" value="LinkedIn" />
+              <SelectBox label="Objective" value="Awareness" />
             </div>
 
-            <div className="checklist">
-              {draft.checklist.map((item) => (
-                <span key={item}>
-                  <CheckCircle2 size={15} />
-                  {item}
-                </span>
-              ))}
+            <label className="draft-field">
+              <span>
+                Post Copy <em>Demo draft — review and replace with verified insights.</em>
+              </span>
+              <textarea value={draftText} onChange={(event) => setDraftText(event.target.value)} />
+            </label>
+
+            <div className="copy-meta">
+              <span>Word count: {wordCount}</span>
+              <span>Characters: {draftText.length}</span>
             </div>
-          </div>
-        </section>
 
-        <section className="workflow-panel" id="workflow">
-          <div className="panel-heading">
-            <div>
-              <p className="section-label">Repeatable workflow</p>
-              <h2>Low-cost discovery loop</h2>
+            <label className="draft-field cta-field">
+              <span>Call to Action (optional)</span>
+              <input value={cta} onChange={(event) => setCta(event.target.value)} />
+              <small>{cta.length} / 100</small>
+            </label>
+
+            <div className="warning-box">
+              <Info size={22} />
+              <div>
+                <strong>Demo content. No fabricated claims.</strong>
+                <span>Replace with verified metrics and real quotes before publishing.</span>
+              </div>
             </div>
-            <FileText size={20} />
-          </div>
 
-          <div className="workflow-grid">
-            <WorkflowStep
-              icon={<Search size={18} />}
-              title="1. Collect winners"
-              text="Use LinkedIn analytics, platform search, YouTube Studio, VidIQ, TubeBuddy, TikTok Creative Center, or manual competitor review."
-            />
-            <WorkflowStep
-              icon={<Table2 size={18} />}
-              title="2. Import verified rows"
-              text="Paste platform, URL, hook, topic, views, engagements, comments, shares, format, length, and visual style into the CSV template."
-            />
-            <WorkflowStep
-              icon={<Brain size={18} />}
-              title="3. Read the pattern"
-              text="AGLI ranks by view signal, engagement rate, share signal, comment signal, recency, and source quality."
-            />
-            <WorkflowStep
-              icon={<PlaySquare size={18} />}
-              title="4. Draft, review, refine"
-              text="Generate post copy and video outlines, then human-review facts, tone, client references, and brand fit."
-            />
-          </div>
-
-          <div className="import-status">
-            <Link2 size={16} />
-            <span>{importStatus}</span>
-            <a href="/sample-import.csv" download>
-              Download CSV template
-            </a>
-          </div>
-        </section>
+            <div className="draft-actions">
+              <button className="secondary-action" type="button" onClick={copyDraft}>
+                <Copy size={16} />
+                Save draft
+              </button>
+              <button className="calendar-action" type="button">
+                <CalendarDays size={17} />
+                Add to Calendar
+              </button>
+              <button className="calendar-caret" type="button">
+                <ChevronDown size={17} />
+              </button>
+            </div>
+          </aside>
+        </div>
       </main>
     </div>
   )
 }
 
-interface MetricTileProps {
-  icon: ReactNode
-  label: string
-  value: string
-  caption: string
-}
-
-function MetricTile({ icon, label, value, caption }: MetricTileProps) {
+function NavItem({ active, icon, label }: { active?: boolean; icon: ReactNode; label: string }) {
   return (
-    <div className="metric-tile">
-      <span>{icon}</span>
-      <div>
-        <p>{label}</p>
-        <strong>{value}</strong>
-        <small>{caption}</small>
-      </div>
-    </div>
+    <a className={active ? 'active' : ''} href={`#${label.toLowerCase().replace(/\s+/g, '-')}`}>
+      {icon}
+      <span>{label}</span>
+    </a>
   )
 }
 
-interface SelectControlProps {
+function SelectBox({
+  icon,
+  label,
+  value,
+}: {
+  icon?: ReactNode
   label: string
   value: string
-  options: string[]
-  onChange: (value: string) => void
-}
-
-function SelectControl({ label, value, options, onChange }: SelectControlProps) {
+}) {
   return (
-    <label className="field select-field">
+    <label className="select-box">
       <span>{label}</span>
-      <select value={value} onChange={(event) => onChange(event.target.value)}>
-        {options.map((option) => (
-          <option key={option} value={option}>
-            {option}
-          </option>
-        ))}
-      </select>
+      <div>
+        {icon}
+        <strong>{value}</strong>
+        <ChevronDown size={17} />
+      </div>
     </label>
   )
 }
 
-interface ResearchTableProps {
-  rankedRows: RankedContent[]
-  selectedId?: string
-  onSelect: (id: string) => void
-  onUsePattern: (item: RankedContent) => void
+function PlatformBadge({ platform }: { platform: Platform }) {
+  return <span className={`platform-badge ${platform.toLowerCase()}`}>{platformLabel(platform)}</span>
 }
 
-function ResearchTable({ rankedRows, selectedId, onSelect, onUsePattern }: ResearchTableProps) {
-  return (
-    <section className="research-panel">
-      <div className="panel-heading">
-        <div>
-          <p className="section-label">Research</p>
-          <h2>Ranked content examples</h2>
-        </div>
-        <Table2 size={20} />
-      </div>
-
-      <div className="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Content</th>
-              <th>Signal</th>
-              <th>Pattern</th>
-              <th>Use</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rankedRows.map((item) => (
-              <tr
-                className={item.id === selectedId ? 'selected-row' : ''}
-                key={item.id}
-                onClick={() => onSelect(item.id)}
-              >
-                <td>
-                  <div className="content-cell">
-                    <span className={`platform platform-${item.platform.toLowerCase()}`}>
-                      {item.platform}
-                    </span>
-                    <strong>{item.title}</strong>
-                    <small>{item.hook}</small>
-                    <QualityPill item={item} />
-                  </div>
-                </td>
-                <td>
-                  <div className="signal-cell">
-                    <strong>{item.score}</strong>
-                    <span>{formatCompactNumber(item.views)} views</span>
-                    <span>{formatPercent(item.engagementRate)} ER</span>
-                  </div>
-                </td>
-                <td>
-                  <div className="pattern-cell">
-                    <span>{item.hookType}</span>
-                    <small>{item.format}</small>
-                    <small>{item.visualStyle}</small>
-                  </div>
-                </td>
-                <td>
-                  <button
-                    className="mini-button"
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation()
-                      onUsePattern(item)
-                    }}
-                  >
-                    <Sparkles size={14} />
-                    Use
-                  </button>
-                  {item.url ? (
-                    <a className="source-link" href={item.url} target="_blank">
-                      <ExternalLink size={14} />
-                    </a>
-                  ) : null}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  )
+function platformLabel(platform: Platform) {
+  if (platform === 'LinkedIn') return 'in'
+  if (platform === 'YouTube') return '▶'
+  if (platform === 'Instagram') return '◎'
+  return '♪'
 }
 
-function QualityPill({ item }: { item: RankedContent }) {
-  const label =
-    item.sourceQuality === 'demo'
-      ? 'Demo seed'
-      : item.sourceQuality === 'verified'
-        ? 'Verified'
-        : 'Imported'
+function ContentType({ type }: { type: PrototypeRow['type'] }) {
+  const icon =
+    type === 'Video' ? (
+      <Video size={15} />
+    ) : type === 'Carousel' ? (
+      <ImageIcon size={15} />
+    ) : (
+      <FileText size={15} />
+    )
 
   return (
-    <span className={`quality-pill quality-${item.sourceQuality}`}>
-      <ShieldCheck size={13} />
-      {label}
+    <span className="content-type">
+      {icon}
+      {type}
     </span>
-  )
-}
-
-function PatternList({ title, groups }: { title: string; groups: PatternGroup[] }) {
-  return (
-    <div className="pattern-list">
-      <h3>{title}</h3>
-      {groups.length > 0 ? (
-        groups.map((group) => (
-          <div className="pattern-item" key={group.label}>
-            <div>
-              <strong>{group.label}</strong>
-              <span>
-                {group.count} examples, avg score {group.averageScore}
-              </span>
-            </div>
-            <p>{group.examples[0]}</p>
-          </div>
-        ))
-      ) : (
-        <p className="empty-state">Import or enable demo data to see patterns.</p>
-      )}
-    </div>
-  )
-}
-
-function WorkflowStep({
-  icon,
-  title,
-  text,
-}: {
-  icon: ReactNode
-  title: string
-  text: string
-}) {
-  return (
-    <div className="workflow-step">
-      <span>{icon}</span>
-      <strong>{title}</strong>
-      <p>{text}</p>
-    </div>
   )
 }
 
