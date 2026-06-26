@@ -12,7 +12,6 @@ import {
   Info,
   LineChart,
   MessageSquare,
-  PencilLine,
   Search,
   Settings,
   ShieldCheck,
@@ -28,11 +27,11 @@ import './App.css'
 
 type Platform = 'LinkedIn' | 'YouTube' | 'Instagram' | 'TikTok'
 type Confidence = 'Medium' | 'Low'
+type DraftTab = 'Post Copy' | 'Hooks' | 'Video Outline' | 'Hashtags'
 type PageKey =
   | 'Overview'
   | 'Research'
   | 'Pattern Engine'
-  | 'Draft Studio'
   | 'Calendar'
   | 'Content Library'
   | 'Reports'
@@ -102,7 +101,7 @@ const patternColumns = [
   {
     icon: <Table2 size={20} />,
     title: 'Top Formats',
-    items: ['Text Post              34%', 'Short Video            28%', 'Carousel               22%', 'Article                10%', 'Live/Long Form          6%'],
+    items: ['Text Post 34%', 'Short Video 28%', 'Carousel 22%', 'Article 10%', 'Live/Long Form 6%'],
     link: 'View more (6)',
   },
   {
@@ -123,7 +122,6 @@ const primaryNav: Array<{ icon: ReactNode; label: PageKey }> = [
   { icon: <Home size={18} />, label: 'Overview' },
   { icon: <Search size={19} />, label: 'Research' },
   { icon: <Table2 size={18} />, label: 'Pattern Engine' },
-  { icon: <PencilLine size={18} />, label: 'Draft Studio' },
   { icon: <CalendarDays size={18} />, label: 'Calendar' },
   { icon: <Folder size={18} />, label: 'Content Library' },
   { icon: <LineChart size={18} />, label: 'Reports' },
@@ -136,19 +134,54 @@ const secondaryNav: Array<{ icon: ReactNode; label: PageKey }> = [
   { icon: <Settings size={18} />, label: 'Settings' },
 ]
 
+const calendarItems = [
+  ['May 20', 'LinkedIn', 'Manager check-in carousel', 'Ready for review'],
+  ['May 22', 'Instagram', 'Stress signal reel', 'Drafting'],
+  ['May 27', 'YouTube', 'Pro Actief workshop short', 'Needs footage'],
+  ['Jun 03', 'TikTok', 'Debrief question clip', 'Scheduled'],
+]
+
+const libraryItems = [
+  ['IGLO explainer deck', 'Slides', 'Brand approved', 'L&D managers'],
+  ['Pro Actief workshop photos', 'Image set', 'Needs consent check', 'HR leads'],
+  ['Client logo reference sheet', 'Asset', 'Internal only', 'Sales deck'],
+  ['Facilitator video clips', 'Video', 'Ready for editing', 'Short-form content'],
+]
+
+const savedSearches = [
+  ['HR burnout prevention', 'LinkedIn + YouTube', '24 winners found'],
+  ['Team-building debrief questions', 'TikTok + Instagram', '18 winners found'],
+  ['Learning culture posts', 'LinkedIn', '31 winners found'],
+]
+
+const teamMembers = [
+  ['Jamie Bakker', 'Content Strategist', 'Owns calendar', 'Active'],
+  ['Mila de Vries', 'Facilitator', 'Reviews brand fit', 'Active'],
+  ['Noah Janssen', 'Marketing Lead', 'Approves publishing', 'Away'],
+  ['Sofia Klein', 'L&D Advisor', 'Checks HR relevance', 'Active'],
+]
+
 function App() {
   const [activePage, setActivePage] = useState<PageKey>('Research')
+  const [draftTab, setDraftTab] = useState<DraftTab>('Post Copy')
   const [draftText, setDraftText] = useState(postCopy)
   const [cta, setCta] = useState('Deel je ervaring in de comments!')
+  const [notice, setNotice] = useState('Ready')
   const wordCount = useMemo(() => draftText.trim().split(/\s+/).filter(Boolean).length, [draftText])
+
+  function action(message: string) {
+    setNotice(message)
+  }
 
   function generateDraft() {
     setDraftText(postCopy)
     setCta('Plan een korte teamsessie met Pro Actief.')
+    action('Draft regenerated from selected pattern')
   }
 
   async function copyDraft() {
     await navigator.clipboard.writeText(`${draftText}\n\n${cta}`)
+    action('Draft copied')
   }
 
   return (
@@ -166,7 +199,10 @@ function App() {
               icon={item.icon}
               key={item.label}
               label={item.label}
-              onClick={() => setActivePage(item.label)}
+              onClick={() => {
+                setActivePage(item.label)
+                action(`${item.label} opened`)
+              }}
             />
           ))}
         </nav>
@@ -180,19 +216,22 @@ function App() {
               icon={item.icon}
               key={item.label}
               label={item.label}
-              onClick={() => setActivePage(item.label)}
+              onClick={() => {
+                setActivePage(item.label)
+                action(`${item.label} opened`)
+              }}
             />
           ))}
         </nav>
 
-        <div className="sidebar-user">
+        <button className="sidebar-user" onClick={() => action('User menu opened')} type="button">
           <span>JB</span>
           <div>
             <strong>Jamie Bakker</strong>
             <small>Content Strategist</small>
           </div>
           <ChevronDown size={17} />
-        </div>
+        </button>
       </aside>
 
       <main className="research-page">
@@ -201,25 +240,32 @@ function App() {
           <div className="status-strip">
             <ShieldCheck size={21} />
             <span>Verified metrics only. Replace demo data with verified metrics before publishing.</span>
-            <strong>No fabricated claims</strong>
+            <strong>{notice}</strong>
             <i />
-            <CircleHelp size={21} />
-            <Bell size={21} />
+            <button aria-label="Help" onClick={() => action('Help panel opened')} type="button">
+              <CircleHelp size={21} />
+            </button>
+            <button aria-label="Notifications" onClick={() => action('Notifications checked')} type="button">
+              <Bell size={21} />
+            </button>
           </div>
         </header>
 
         {activePage === 'Research' ? (
           <ResearchPage
+            action={action}
             copyDraft={copyDraft}
             cta={cta}
+            draftTab={draftTab}
             draftText={draftText}
             generateDraft={generateDraft}
             setCta={setCta}
+            setDraftTab={setDraftTab}
             setDraftText={setDraftText}
             wordCount={wordCount}
           />
         ) : (
-          <SidebarPage activePage={activePage} />
+          <SidebarPage action={action} activePage={activePage} />
         )}
       </main>
     </div>
@@ -227,38 +273,44 @@ function App() {
 }
 
 function ResearchPage({
+  action,
   copyDraft,
   cta,
+  draftTab,
   draftText,
   generateDraft,
   setCta,
+  setDraftTab,
   setDraftText,
   wordCount,
 }: {
+  action: (message: string) => void
   copyDraft: () => Promise<void>
   cta: string
+  draftTab: DraftTab
   draftText: string
   generateDraft: () => void
   setCta: (value: string) => void
+  setDraftTab: (value: DraftTab) => void
   setDraftText: (value: string) => void
   wordCount: number
 }) {
   return (
     <>
       <section className="filter-row" aria-label="Research filters">
-        <SelectBox label="ICP" value="HR & L&D Professionals" />
-        <SelectBox label="Platform" value="All Platforms" />
-        <SelectBox label="Objective" value="Awareness" />
-        <SelectBox label="Tone" value="Professional & Warm" />
-        <button className="date-button" type="button">
+        <SelectBox label="ICP" onClick={() => action('ICP filter opened')} value="HR & L&D Professionals" />
+        <SelectBox label="Platform" onClick={() => action('Platform filter opened')} value="All Platforms" />
+        <SelectBox label="Objective" onClick={() => action('Objective filter opened')} value="Awareness" />
+        <SelectBox label="Tone" onClick={() => action('Tone filter opened')} value="Professional & Warm" />
+        <button className="date-button" onClick={() => action('Date range opened')} type="button">
           <CalendarDays size={17} />
           May 5 - May 18, 2025
         </button>
-        <button className="filter-button" type="button">
+        <button className="filter-button" onClick={() => action('Advanced filters opened')} type="button">
           <Search size={17} />
           Filters
         </button>
-        <button className="save-button" type="button">
+        <button className="save-button" onClick={() => action('Search saved')} type="button">
           <Bookmark size={17} />
           Save search
         </button>
@@ -293,7 +345,7 @@ function ResearchPage({
                 </thead>
                 <tbody>
                   {rows.map((row) => (
-                    <tr key={row.id}>
+                    <tr key={row.id} onClick={() => action(`${row.title} selected`)}>
                       <td>{row.id}</td>
                       <td className="title-cell">{row.title}</td>
                       <td><PlatformBadge platform={row.platform} /></td>
@@ -317,15 +369,16 @@ function ResearchPage({
             <div className="table-footer">
               <span>Showing 1-8 of 240 results</span>
               <div className="pagination">
-                <button type="button">{'\u2039'}</button>
-                <button className="active" type="button">1</button>
-                <button type="button">2</button>
-                <button type="button">3</button>
-                <button type="button">4</button>
-                <button type="button">5</button>
-                <span>...</span>
-                <button type="button">30</button>
-                <button type="button">{'\u203a'}</button>
+                {['\u2039', '1', '2', '3', '4', '5', '...', '30', '\u203a'].map((item) => (
+                  <button
+                    className={item === '1' ? 'active' : ''}
+                    key={item}
+                    onClick={() => action(`Page ${item} clicked`)}
+                    type="button"
+                  >
+                    {item}
+                  </button>
+                ))}
               </div>
             </div>
           </section>
@@ -349,7 +402,9 @@ function ResearchPage({
                       <li key={item}>{item}</li>
                     ))}
                   </ol>
-                  <a href="#research">{column.link}</a>
+                  <button className="link-button" onClick={() => action(`${column.title} detail opened`)} type="button">
+                    {column.link}
+                  </button>
                 </div>
               ))}
             </div>
@@ -364,7 +419,7 @@ function ResearchPage({
         <aside className="draft-card">
           <div className="draft-header">
             <h2>Draft Studio</h2>
-            <button className="generate-button" type="button" onClick={generateDraft}>
+            <button className="generate-button" onClick={generateDraft} type="button">
               <Sparkles size={16} />
               Generate draft
             </button>
@@ -372,30 +427,44 @@ function ResearchPage({
 
           <div className="draft-scroll">
             <div className="draft-tabs">
-              <button className="active" type="button">Post Copy</button>
-              <button type="button">Hooks</button>
-              <button type="button">Video Outline</button>
-              <button type="button">Hashtags</button>
+              {(['Post Copy', 'Hooks', 'Video Outline', 'Hashtags'] as DraftTab[]).map((tab) => (
+                <button
+                  className={draftTab === tab ? 'active' : ''}
+                  key={tab}
+                  onClick={() => {
+                    setDraftTab(tab)
+                    action(`${tab} tab opened`)
+                  }}
+                  type="button"
+                >
+                  {tab}
+                </button>
+              ))}
             </div>
 
             <div className="draft-form-grid">
-              <SelectBox label="Brand / Client" value="Pro Actief" />
-              <SelectBox label="Content Pillar" value="Leiderschap" />
-              <SelectBox icon={<span className="mini-linkedin">in</span>} label="Platform" value="LinkedIn" />
-              <SelectBox label="Objective" value="Awareness" />
+              <SelectBox label="Brand / Client" onClick={() => action('Brand selector opened')} value="Pro Actief" />
+              <SelectBox label="Content Pillar" onClick={() => action('Content pillar selector opened')} value="Leiderschap" />
+              <SelectBox icon={<span className="mini-linkedin">in</span>} label="Platform" onClick={() => action('Draft platform selector opened')} value="LinkedIn" />
+              <SelectBox label="Objective" onClick={() => action('Draft objective selector opened')} value="Awareness" />
             </div>
 
-            <label className="draft-field">
-              <span>
-                Post Copy <em>Demo draft - review and replace with verified insights.</em>
-              </span>
-              <textarea value={draftText} onChange={(event) => setDraftText(event.target.value)} />
-            </label>
-
-            <div className="copy-meta">
-              <span>Word count: {wordCount}</span>
-              <span>Characters: {draftText.length}</span>
-            </div>
+            {draftTab === 'Post Copy' ? (
+              <>
+                <label className="draft-field">
+                  <span>
+                    Post Copy <em>Demo draft - review and replace with verified insights.</em>
+                  </span>
+                  <textarea value={draftText} onChange={(event) => setDraftText(event.target.value)} />
+                </label>
+                <div className="copy-meta">
+                  <span>Word count: {wordCount}</span>
+                  <span>Characters: {draftText.length}</span>
+                </div>
+              </>
+            ) : (
+              <DraftTabContent tab={draftTab} />
+            )}
 
             <label className="draft-field cta-field">
               <span>Call to Action (optional)</span>
@@ -412,15 +481,15 @@ function ResearchPage({
             </div>
 
             <div className="draft-actions">
-              <button className="secondary-action" type="button" onClick={copyDraft}>
+              <button className="secondary-action" onClick={copyDraft} type="button">
                 <Copy size={16} />
                 Save draft
               </button>
-              <button className="calendar-action" type="button">
+              <button className="calendar-action" onClick={() => action('Draft added to calendar')} type="button">
                 <CalendarDays size={17} />
                 Add to Calendar
               </button>
-              <button className="calendar-caret" type="button">
+              <button className="calendar-caret" onClick={() => action('Calendar options opened')} type="button">
                 <ChevronDown size={17} />
               </button>
             </div>
@@ -431,13 +500,42 @@ function ResearchPage({
   )
 }
 
-function SidebarPage({ activePage }: { activePage: PageKey }) {
+function DraftTabContent({ tab }: { tab: Exclude<DraftTab, 'Post Copy'> }) {
+  const content = {
+    Hooks: ['Stop calling it soft skills.', 'A team can look calm and still carry stress.', 'What if stress prevention started with play?'],
+    'Video Outline': ['0-3s: Show a facilitator placing a card.', '3-20s: Team reacts and discusses.', '20-45s: Debrief question connects play to work.'],
+    Hashtags: ['#LearningAndDevelopment', '#WorkplaceWellbeing', '#TeamDevelopment', '#SeriousGames'],
+  }[tab]
+
+  return (
+    <div className="draft-tab-content">
+      {content.map((item) => (
+        <p key={item}>{item}</p>
+      ))}
+    </div>
+  )
+}
+
+function SidebarPage({ action, activePage }: { action: (message: string) => void; activePage: PageKey }) {
+  if (activePage === 'Overview') {
+    return (
+      <div className="subpage">
+        <PageCard title="Go-to-market overview" subtitle="Live dummy snapshot for the AGLI workflow.">
+          <div className="placeholder-grid">
+            <Metric title="Content winners" value="240" />
+            <Metric title="Drafts this month" value="18" />
+            <Metric title="Ready to review" value="7" />
+          </div>
+          <ActionRow action={action} labels={['Start research run', 'Import metrics', 'Open calendar']} />
+        </PageCard>
+      </div>
+    )
+  }
+
   if (activePage === 'Pattern Engine') {
     return (
       <div className="subpage">
-        <section className="subpage-card wide">
-          <h2>Pattern Engine</h2>
-          <p>Reusable patterns extracted from top-performing content.</p>
+        <PageCard title="Pattern Engine" subtitle="Reusable hooks, topics, formats, and visual styles from winning content.">
           <div className="pattern-grid-large">
             {patternColumns.map((column) => (
               <div className="pattern-block" key={column.title}>
@@ -450,49 +548,161 @@ function SidebarPage({ activePage }: { activePage: PageKey }) {
                     <li key={item}>{item}</li>
                   ))}
                 </ol>
+                <button className="link-button" onClick={() => action(`${column.title} exported`)} type="button">
+                  Export pattern
+                </button>
               </div>
             ))}
           </div>
-        </section>
+        </PageCard>
       </div>
     )
   }
 
-  if (activePage === 'Draft Studio') {
+  if (activePage === 'Calendar') {
+    return <DataPage action={action} buttonLabel="Schedule" rows={calendarItems} title="Publishing Calendar" />
+  }
+
+  if (activePage === 'Content Library') {
+    return <DataPage action={action} buttonLabel="Open asset" rows={libraryItems} title="Content Library" />
+  }
+
+  if (activePage === 'Reports') {
     return (
-      <div className="subpage two-column-page">
-        <section className="subpage-card">
-          <h2>Draft Studio</h2>
-          <p>Focused writing workspace for Pro Actief social posts and video scripts.</p>
-          <textarea className="large-editor" defaultValue={postCopy} />
-        </section>
-        <section className="subpage-card">
-          <h2>Review checklist</h2>
-          <ul className="check-list">
-            <li>No fabricated claims, statistics, or quotes.</li>
-            <li>Replace demo metrics with verified source data.</li>
-            <li>Keep tone professional, warm, and practical.</li>
-            <li>Use Pro Actief and IGLO language accurately.</li>
-          </ul>
-        </section>
+      <div className="subpage">
+        <PageCard title="Reports" subtitle="Dummy performance report for demo validation.">
+          <div className="placeholder-grid">
+            <Metric title="Median engagement" value="5.5%" />
+            <Metric title="Best platform" value="LinkedIn" />
+            <Metric title="Share rate" value="1.8%" />
+          </div>
+          <DataTable rows={[['LinkedIn', '86', '5.9%', 'Text post'], ['YouTube', '82', '4.8%', 'Short video'], ['Instagram', '79', '6.1%', 'Carousel']]} />
+          <ActionRow action={action} labels={['Export report', 'Compare month', 'Share with team']} />
+        </PageCard>
       </div>
     )
+  }
+
+  if (activePage === 'Saved Searches') {
+    return <DataPage action={action} buttonLabel="Run search" rows={savedSearches} title="Saved Searches" />
+  }
+
+  if (activePage === 'Brand Voice') {
+    return (
+      <div className="subpage">
+        <PageCard title="Brand Voice" subtitle="Rules for credible Pro Actief copy.">
+          <div className="placeholder-grid">
+            <PlaceholderCard title="Do" text="Be practical, calm, specific, and human." />
+            <PlaceholderCard title="Avoid" text="Clickbait, clinical promises, fake ROI, and invented quotes." />
+            <PlaceholderCard title="Use" text="IGLO, stress prevention, facilitated serious game, team reflection." />
+          </div>
+          <ActionRow action={action} labels={['Approve tone', 'Edit phrases', 'Upload brand docs']} />
+        </PageCard>
+      </div>
+    )
+  }
+
+  if (activePage === 'Team') {
+    return <DataPage action={action} buttonLabel="Assign" rows={teamMembers} title="Team Workspace" />
   }
 
   return (
     <div className="subpage">
-      <section className="subpage-card wide">
-        <h2>{activePage}</h2>
-        <p>
-          This section is prepared as its own page, so navigation behaves like the prototype and
-          long content scrolls inside the workspace instead of moving the whole app shell.
-        </p>
-        <div className="placeholder-grid">
-          <PlaceholderCard title="Current focus" text="Amsterdam Game Lab content operations" />
-          <PlaceholderCard title="Owner" text="Jamie Bakker, Content Strategist" />
-          <PlaceholderCard title="Status" text="Demo workspace - ready for verified data" />
+      <PageCard title="Settings" subtitle="Demo controls for the prototype workspace.">
+        <div className="settings-grid">
+          {['Require verified metrics', 'Show demo labels', 'Manual publishing only', 'Review before export'].map((item) => (
+            <button className="setting-toggle" key={item} onClick={() => action(`${item} toggled`)} type="button">
+              <span>{item}</span>
+              <strong>On</strong>
+            </button>
+          ))}
         </div>
-      </section>
+        <ActionRow action={action} labels={['Save settings', 'Reset demo data', 'Download backup']} />
+      </PageCard>
+    </div>
+  )
+}
+
+function PageCard({ children, subtitle, title }: { children: ReactNode; subtitle: string; title: string }) {
+  return (
+    <section className="subpage-card wide">
+      <h2>{title}</h2>
+      <p>{subtitle}</p>
+      {children}
+    </section>
+  )
+}
+
+function DataPage({
+  action,
+  buttonLabel,
+  rows: dataRows,
+  title,
+}: {
+  action: (message: string) => void
+  buttonLabel: string
+  rows: string[][]
+  title: string
+}) {
+  return (
+    <div className="subpage">
+      <PageCard title={title} subtitle="Dummy data for a functional prototype flow.">
+        <DataTable buttonLabel={buttonLabel} onAction={action} rows={dataRows} />
+      </PageCard>
+    </div>
+  )
+}
+
+function DataTable({
+  buttonLabel,
+  onAction,
+  rows: dataRows,
+}: {
+  buttonLabel?: string
+  onAction?: (message: string) => void
+  rows: string[][]
+}) {
+  return (
+    <div className="data-table-wrap">
+      <table className="data-table">
+        <tbody>
+          {dataRows.map((row) => (
+            <tr key={row.join('-')}>
+              {row.map((cell) => (
+                <td key={cell}>{cell}</td>
+              ))}
+              {buttonLabel ? (
+                <td>
+                  <button className="compact-action" onClick={() => onAction?.(`${buttonLabel}: ${row[0]}`)} type="button">
+                    {buttonLabel}
+                  </button>
+                </td>
+              ) : null}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+function Metric({ title, value }: { title: string; value: string }) {
+  return (
+    <div className="placeholder-card metric-card">
+      <span>{title}</span>
+      <strong>{value}</strong>
+    </div>
+  )
+}
+
+function ActionRow({ action, labels }: { action: (message: string) => void; labels: string[] }) {
+  return (
+    <div className="action-row">
+      {labels.map((label) => (
+        <button className="compact-action" key={label} onClick={() => action(`${label} clicked`)} type="button">
+          {label}
+        </button>
+      ))}
     </div>
   )
 }
@@ -518,27 +728,32 @@ function NavItem({
   onClick: () => void
 }) {
   return (
-    <button
-      aria-current={active ? 'page' : undefined}
-      className={active ? 'active' : ''}
-      onClick={onClick}
-      type="button"
-    >
+    <button aria-current={active ? 'page' : undefined} className={active ? 'active' : ''} onClick={onClick} type="button">
       {icon}
       <span>{label}</span>
     </button>
   )
 }
 
-function SelectBox({ icon, label, value }: { icon?: ReactNode; label: string; value: string }) {
+function SelectBox({
+  icon,
+  label,
+  onClick,
+  value,
+}: {
+  icon?: ReactNode
+  label: string
+  onClick: () => void
+  value: string
+}) {
   return (
     <label className="select-box">
       <span>{label}</span>
-      <div>
+      <button aria-label={value} className="select-control" onClick={onClick} type="button">
         {icon}
         <strong>{value}</strong>
         <ChevronDown size={17} />
-      </div>
+      </button>
     </label>
   )
 }
