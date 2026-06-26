@@ -19,7 +19,7 @@ flowchart LR
 
 ## Modules
 
-- `src/data/seedContent.json`: demo rows for prototype walkthrough.
+- `data/content.csv`: optional local research dataset for reproducible reports.
 - `src/lib/csv.ts`: CSV parser and imported row normalization.
 - `src/lib/scoring.ts`: ranking and pattern grouping logic.
 - `src/lib/drafts.ts`: deterministic draft generation with guardrails.
@@ -27,7 +27,7 @@ flowchart LR
 
 ## Why No Live Scraping
 
-LinkedIn, Instagram, and TikTok restrict reliable public metric access. A live scraper would be brittle, slow in demos, and risky for terms of service. AGLI instead accepts verified exports from platform-native analytics and discovery tools.
+LinkedIn, Instagram, and TikTok restrict reliable public metric access. A live scraper would be brittle, slow in live walkthroughs, and risky for terms of service. AGLI instead accepts verified exports from platform-native analytics and discovery tools.
 
 ## Future API Upgrade
 

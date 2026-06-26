@@ -9,14 +9,14 @@ The tool is designed for the hackathon case: category creation, low search deman
 - Ranks imported LinkedIn, YouTube, Instagram, and TikTok content by views, engagement rate, shares, comments, recency, and source quality.
 - Surfaces pattern insights: hooks, topics, formats, lengths, and visual styles.
 - Generates draft post copy, hook options, and video outlines for Amsterdam Game Lab and Pro Actief.
-- Keeps demo seed rows clearly labelled as synthetic so they are not mistaken for real proof.
+- Starts empty and only ranks user-imported or manually created records.
 - Exports analysis JSON and includes a reproducible command-line pattern report.
 
 ## Stack
 
 - React + Vite + TypeScript
-- Local JSON/CSV data workflow
-- No paid API required for the demo
+- Local CSV/JSON data workflow with browser localStorage persistence
+- No paid API required for the prototype
 - Vercel-ready static deployment
 
 ## Run Locally
@@ -34,20 +34,19 @@ Open the local URL Vite prints in the terminal.
 npm run analyze
 ```
 
-This writes `dist-analysis/pattern-report.md` from `src/data/seedContent.json`.
+This writes `dist-analysis/pattern-report.md` from `data/content.csv` or `data/content.json`. If no rows exist yet, the report is generated with an empty-state note instead of sample examples.
 
 ## Use Real Research Data
 
 1. Collect posts and videos from LinkedIn analytics, YouTube Studio, VidIQ, TubeBuddy, TikTok Creative Center, Instagram insights, or manual platform review.
-2. Fill `public/sample-import.csv` with verified metrics.
+2. Fill `public/sample-import.csv` or `data/content.csv` with verified metrics.
 3. In the app, click **Import CSV**.
-4. Turn off **Show demo seed** before making a client-facing export.
-5. Use **Export analysis** to download the ranked rows, patterns, draft, and guardrails.
+4. Use **Export analysis** to download the ranked rows, patterns, draft, and guardrails.
 
 ## Important Honesty Rules
 
-- Demo seed metrics are synthetic and only prove the workflow.
-- Do not present demo seed rows as actual market research.
+- The app does not preload performance data.
+- Do not present unverified imported rows as actual market research.
 - Do not invent client results, ROI, medical claims, quotes, or case studies.
 - Generated output is a draft for human review, not auto-published content.
 

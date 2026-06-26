@@ -70,7 +70,7 @@ function readPlatform(value: string): Platform {
 }
 
 function readSourceQuality(value: string): SourceQuality {
-  if (value === 'verified' || value === 'demo' || value === 'imported') return value
+  if (value === 'verified' || value === 'imported') return value
   return 'imported'
 }
 

@@ -494,9 +494,19 @@
   color: #6a5a00;
 }
 
-.confidence.low {
+.confidence.low,
+.confidence.imported {
   background: #eef1f4;
   color: #475569;
+}
+
+.confidence.verified {
+  background: #dff8ed;
+  color: #006b5f;
+}
+
+.selected-row td {
+  background: #f0faf7;
 }
 
 .table-footer {
@@ -524,6 +534,11 @@
   color: #0f172a;
   font-weight: 760;
   cursor: pointer;
+}
+
+.pagination button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 .pagination button.active {
@@ -925,6 +940,22 @@
   font-size: 13px;
   font-weight: 760;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.import-action input {
+  display: none;
+}
+
+.danger-compact {
+  border-color: #b91c1c;
+  background: #ffffff;
+  color: #991b1b;
 }
 
 .data-table-wrap {
@@ -976,6 +1007,67 @@
   background: #e7f7f2;
   color: #007569;
   text-align: center;
+}
+
+.empty-state {
+  min-height: 118px;
+  display: grid;
+  align-content: center;
+  gap: 8px;
+  border: 1px dashed #cfd8e3;
+  border-radius: 7px;
+  background: #fbfcfd;
+  padding: 18px;
+  color: #475569;
+}
+
+.empty-state strong {
+  color: #0f172a;
+  font-size: 15px;
+}
+
+.empty-state span {
+  max-width: 620px;
+  line-height: 1.5;
+}
+
+.table-empty-cell {
+  padding: 16px 0 !important;
+}
+
+.editable-card {
+  display: grid;
+  gap: 10px;
+}
+
+.editable-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.editable-card-head button {
+  width: 28px;
+  height: 28px;
+  border: 1px solid #d9e1ea;
+  border-radius: 5px;
+  background: #ffffff;
+  color: #64748b;
+  cursor: pointer;
+}
+
+.editable-card textarea {
+  min-height: 92px;
+  width: 100%;
+  border: 1px solid #cfd8e3;
+  border-radius: 5px;
+  background: #ffffff;
+  padding: 10px;
+  color: #0f172a;
+  font: inherit;
+  line-height: 1.45;
+  resize: vertical;
 }
 
 .large-editor {

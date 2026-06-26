@@ -36,7 +36,7 @@ Show:
 
 AGLI does not pretend restricted platform data is freely available. It supports manual or tool-assisted imports from VidIQ, TubeBuddy, TikTok Creative Center, LinkedIn analytics, Instagram insights, and YouTube Studio.
 
-Demo seed data is clearly labelled synthetic. The app warns users not to publish fabricated claims.
+The app starts empty and uses only imported rows. It warns users not to publish fabricated claims.
 
 ## Slide 7 - Scoring Logic
 
@@ -48,8 +48,6 @@ Score combines:
 - Comment signal
 - Recency
 - Source quality
-
-Demo rows receive a penalty so verified/imported rows are preferred.
 
 ## Slide 8 - Draft Logic
 

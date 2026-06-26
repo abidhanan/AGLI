@@ -24,14 +24,12 @@ export function scoreContent(item: ContentItem): RankedContent {
   const engagementSignal = Math.min(rate * 720, 45)
   const shareSignal = Math.min((item.shares / Math.max(item.views, 1)) * 1800, 18)
   const commentSignal = Math.min((item.comments / Math.max(item.views, 1)) * 900, 12)
-  const qualityPenalty = item.sourceQuality === 'demo' ? -6 : 0
   const score = Math.round(
     viewSignal +
       engagementSignal +
       shareSignal +
       commentSignal +
-      recencyBoost(item.date) +
-      qualityPenalty,
+      recencyBoost(item.date),
   )
 
   const scoreReasons = [
@@ -39,10 +37,6 @@ export function scoreContent(item: ContentItem): RankedContent {
     `${formatPercent(rate)} engagement rate`,
     `${formatCompactNumber(item.shares)} shares`,
   ]
-
-  if (item.sourceQuality === 'demo') {
-    scoreReasons.push('demo data penalty')
-  }
 
   return {
     ...item,

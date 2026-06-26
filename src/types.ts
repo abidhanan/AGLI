@@ -1,6 +1,6 @@
 export type Platform = 'LinkedIn' | 'YouTube' | 'Instagram' | 'TikTok'
 
-export type SourceQuality = 'demo' | 'verified' | 'imported'
+export type SourceQuality = 'verified' | 'imported'
 
 export interface ContentItem {
   id: string

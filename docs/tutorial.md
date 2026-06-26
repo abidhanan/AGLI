@@ -35,8 +35,7 @@ For each item, capture:
 ## 2. Import Data
 
 Open AGLI and click **Import CSV**. Use `public/sample-import.csv` as the template.
-
-Turn off **Show demo seed** when using real research. This prevents synthetic demo rows from appearing in the pattern engine.
+The app starts empty, so the ranking and pattern engine only use rows you import.
 
 ## 3. Read the Ranking
 
@@ -49,7 +48,7 @@ AGLI scores each item using:
 - Recency
 - Source quality
 
-Click **Use** on a strong row to send its pattern into Draft Studio.
+Click a strong row to make it the active reference for Draft Studio.
 
 ## 4. Review Patterns
 
