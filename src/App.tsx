@@ -173,6 +173,7 @@ function App() {
   const [settings, setSettings] = useStoredState<AppSettings>('agli:settings', defaultSettings)
   const [selectedContentId, setSelectedContentId] = useState('')
   const [tablePage, setTablePage] = useState(1)
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false)
 
   const rankedContent = useMemo(() => rankContent(contentItems), [contentItems])
   const filteredRanked = useMemo(
@@ -396,6 +397,7 @@ function App() {
               label={item.label}
               onClick={() => {
                 setActivePage(item.label)
+                setProfileMenuOpen(false)
                 action(`${item.label} opened`)
               }}
             />
@@ -413,20 +415,64 @@ function App() {
               label={item.label}
               onClick={() => {
                 setActivePage(item.label)
+                setProfileMenuOpen(false)
                 action(`${item.label} opened`)
               }}
             />
           ))}
         </nav>
 
-        <button className="sidebar-user" onClick={() => setActivePage('Team')} type="button">
-          <span>AG</span>
-          <div>
-            <strong>AGLI workspace</strong>
-            <small>{contentItems.length} research rows</small>
-          </div>
-          <ChevronDown size={17} />
-        </button>
+        <div className="sidebar-user-wrap">
+          {profileMenuOpen ? (
+            <div className="profile-menu">
+              <button onClick={() => action('Workspace profile opened')} type="button">
+                Workspace profile
+              </button>
+              <button
+                onClick={() => {
+                  setActivePage('Team')
+                  setProfileMenuOpen(false)
+                  action('Team workspace opened')
+                }}
+                type="button"
+              >
+                Team workspace
+              </button>
+              <button
+                onClick={() => {
+                  setActivePage('Settings')
+                  setProfileMenuOpen(false)
+                  action('Settings opened')
+                }}
+                type="button"
+              >
+                Settings
+              </button>
+              <button
+                onClick={() => {
+                  exportAnalysis()
+                  setProfileMenuOpen(false)
+                }}
+                type="button"
+              >
+                Export backup
+              </button>
+            </div>
+          ) : null}
+          <button
+            aria-expanded={profileMenuOpen}
+            className="sidebar-user"
+            onClick={() => setProfileMenuOpen((open) => !open)}
+            type="button"
+          >
+            <span>AG</span>
+            <div>
+              <strong>AGLI workspace</strong>
+              <small>{contentItems.length} research rows</small>
+            </div>
+            <ChevronDown size={17} />
+          </button>
+        </div>
       </aside>
 
       <main className="research-page">
@@ -469,15 +515,15 @@ function App() {
             saveSearch={saveSearch}
             selectedContentId={selectedContentId}
             setCta={setCta}
-            setDraftPlatform={() => setDraftPlatform(cycleValue(draftPlatform, platforms))}
+            setDraftPlatform={setDraftPlatform}
             setDraftTab={setDraftTab}
             setDraftText={setDraftText}
-            setIcp={() => setIcp(cycleValue(icp, icpOptions))}
-            setObjective={() => setObjective(cycleValue(objective, objectiveOptions))}
+            setIcp={setIcp}
+            setObjective={setObjective}
             setPage={setTablePage}
-            setPlatformFilter={() => setPlatformFilter(cycleValue(platformFilter, platformOptions))}
+            setPlatformFilter={setPlatformFilter}
             setSelectedContentId={setSelectedContentId}
-            setTone={() => setTone(cycleValue(tone, toneOptions))}
+            setTone={setTone}
             summary={summary}
             tone={tone}
             wordCount={wordCount}
@@ -573,15 +619,15 @@ function ResearchPage({
   saveSearch: () => void
   selectedContentId: string
   setCta: (value: string) => void
-  setDraftPlatform: () => void
+  setDraftPlatform: (value: Platform) => void
   setDraftTab: (value: DraftTab) => void
   setDraftText: (value: string) => void
-  setIcp: () => void
-  setObjective: () => void
+  setIcp: (value: string) => void
+  setObjective: (value: string) => void
   setPage: (value: number) => void
-  setPlatformFilter: () => void
+  setPlatformFilter: (value: PlatformFilter) => void
   setSelectedContentId: (value: string) => void
-  setTone: () => void
+  setTone: (value: string) => void
   summary: PatternSummary
   tone: string
   wordCount: number
@@ -595,10 +641,10 @@ function ResearchPage({
   return (
     <>
       <section className="filter-row" aria-label="Research filters">
-        <SelectBox label="ICP" onClick={setIcp} value={icp} />
-        <SelectBox label="Platform" onClick={setPlatformFilter} value={platformFilter} />
-        <SelectBox label="Objective" onClick={setObjective} value={objective} />
-        <SelectBox label="Tone" onClick={setTone} value={tone} />
+        <SelectBox label="ICP" onSelect={setIcp} options={icpOptions} value={icp} />
+        <SelectBox label="Platform" onSelect={(value) => setPlatformFilter(value as PlatformFilter)} options={platformOptions} value={platformFilter} />
+        <SelectBox label="Objective" onSelect={setObjective} options={objectiveOptions} value={objective} />
+        <SelectBox label="Tone" onSelect={setTone} options={toneOptions} value={tone} />
         <button className="date-button" onClick={() => action('Date range follows imported rows')} type="button">
           <CalendarDays size={17} />
           {dateLabel}
@@ -789,10 +835,10 @@ function ResearchPage({
             </div>
 
             <div className="draft-form-grid">
-              <SelectBox label="Brand / Client" onClick={() => action('Pro Actief selected')} value="Pro Actief" />
-              <SelectBox label="Content Pillar" onClick={() => action('Pillar comes from imported patterns')} value={contentPillar} />
-              <SelectBox icon={<span className="mini-linkedin">{platformLabel(draftPlatform)}</span>} label="Platform" onClick={setDraftPlatform} value={draftPlatform} />
-              <SelectBox label="Objective" onClick={() => action('Use the top filter objective')} value={objective} />
+              <SelectBox label="Brand / Client" onSelect={() => action('Pro Actief selected')} options={['Pro Actief', 'Amsterdam Game Lab']} value="Pro Actief" />
+              <SelectBox label="Content Pillar" onSelect={() => action('Pillar comes from imported patterns')} options={[contentPillar, 'Stress prevention', 'Team reflection', 'Leadership']} value={contentPillar} />
+              <SelectBox icon={<span className="mini-linkedin">{platformLabel(draftPlatform)}</span>} label="Platform" onSelect={(value) => setDraftPlatform(value as Platform)} options={platforms} value={draftPlatform} />
+              <SelectBox label="Objective" onSelect={setObjective} options={objectiveOptions} value={objective} />
             </div>
 
             {draftTab === 'Post Copy' ? (
@@ -971,6 +1017,31 @@ function SidebarPage({
             <Metric title="Verified rows" value={String(contentItems.filter((item) => item.sourceQuality === 'verified').length)} />
             <Metric title="Draft assets" value={String(libraryItems.length)} />
           </div>
+          <WorkflowGrid
+            cards={[
+              {
+                actionLabel: 'Import research',
+                eyebrow: 'Step 1',
+                onAction: () => setActivePage('Research'),
+                text: 'Bring in platform exports or manual research rows before scoring any content pattern.',
+                title: contentItems.length > 0 ? `${contentItems.length} rows ready for scoring` : 'Research intake is empty',
+              },
+              {
+                actionLabel: 'Open patterns',
+                eyebrow: 'Step 2',
+                onAction: () => setActivePage('Pattern Engine'),
+                text: 'Ranked rows are grouped into hooks, topics, formats, length guidance, and visual style signals.',
+                title: summary.sampleSize > 0 ? `${summary.sampleSize} rows in pattern sample` : 'Pattern engine waiting for data',
+              },
+              {
+                actionLabel: 'Review calendar',
+                eyebrow: 'Step 3',
+                onAction: () => setActivePage('Calendar'),
+                text: 'Drafts stay as internal review items until a human approves them for scheduling.',
+                title: `${calendarItems.length} calendar item${calendarItems.length === 1 ? '' : 's'}`,
+              },
+            ]}
+          />
           <ActionRow
             actions={[
               { label: 'Open research', onClick: () => setActivePage('Research') },
@@ -991,6 +1062,27 @@ function SidebarPage({
           subtitle="Reusable hooks, topics, formats, and visual styles calculated from imported winners."
           title="Pattern Engine"
         >
+          <WorkflowGrid
+            cards={[
+              {
+                eyebrow: 'Evidence',
+                text: 'Rows are ranked by views, engagement rate, shares, comments, and recency. Verification status stays visible.',
+                title: `${filteredRanked.length} ranked row${filteredRanked.length === 1 ? '' : 's'}`,
+              },
+              {
+                eyebrow: 'Signal',
+                text: 'Pattern groups are only created from imported rows, so empty states are intentional until research is added.',
+                title: summary.sampleSize > 0 ? `${summary.topHooks.length} hook groups found` : 'No hook groups yet',
+              },
+              {
+                actionLabel: 'Export patterns',
+                eyebrow: 'Output',
+                onAction: exportAnalysis,
+                text: 'Export the exact ranked rows and pattern summary used to generate draft content.',
+                title: 'Reproducible evidence pack',
+              },
+            ]}
+          />
           {summary.sampleSize === 0 ? (
             <EmptyState
               text="Import content rows first. The engine will group patterns by hook type, topic, format, length, and visual style."
@@ -1037,7 +1129,29 @@ function SidebarPage({
           { label: 'Add draft', onClick: addDraftToCalendar },
           { label: 'Export analysis', onClick: exportAnalysis },
         ]}
-      />
+      >
+        <WorkflowGrid
+          cards={[
+            {
+              eyebrow: 'Queue',
+              text: 'Only drafts saved from Draft Studio can be pushed into this calendar, keeping publishing manual.',
+              title: `${calendarItems.length} item${calendarItems.length === 1 ? '' : 's'} in calendar`,
+            },
+            {
+              actionLabel: 'Add current draft',
+              eyebrow: 'Next action',
+              onAction: addDraftToCalendar,
+              text: 'Turn the current draft into a review item with a suggested date three days from now.',
+              title: 'Schedule after review',
+            },
+            {
+              eyebrow: 'Guardrail',
+              text: 'Nothing auto-publishes. Calendar entries are planning records for the Amsterdam Game Lab team.',
+              title: 'Manual publishing only',
+            },
+          ]}
+        />
+      </DataPage>
     )
   }
 
@@ -1057,7 +1171,29 @@ function SidebarPage({
           { label: 'Add asset', onClick: addLibraryItem },
           { label: 'Open draft studio', onClick: () => setActivePage('Research') },
         ]}
-      />
+      >
+        <WorkflowGrid
+          cards={[
+            {
+              eyebrow: 'Library',
+              text: 'Saved drafts, uploaded asset records, and review notes are kept here for reuse in the submission.',
+              title: `${libraryItems.length} saved asset${libraryItems.length === 1 ? '' : 's'}`,
+            },
+            {
+              actionLabel: 'Create asset record',
+              eyebrow: 'Intake',
+              onAction: addLibraryItem,
+              text: 'Add an asset placeholder, then rename it after a real deck, image set, or edited draft is ready.',
+              title: 'Asset tracker',
+            },
+            {
+              eyebrow: 'Review',
+              text: 'Each item keeps a status so drafts do not get confused with approved publishing material.',
+              title: 'Human review required',
+            },
+          ]}
+        />
+      </DataPage>
     )
   }
 
@@ -1078,6 +1214,27 @@ function SidebarPage({
             emptyText="Import rows to calculate platform reports."
             rows={rows}
           />
+          <WorkflowGrid
+            cards={[
+              {
+                eyebrow: 'Coverage',
+                text: 'Reports compare platforms only after imported rows exist for those platforms.',
+                title: `${rows.length} platform report${rows.length === 1 ? '' : 's'}`,
+              },
+              {
+                eyebrow: 'Best signal',
+                text: rows[0] ? `${rows[0].cells[0]} currently has the strongest average score.` : 'Import rows to identify the strongest platform.',
+                title: rows[0]?.cells[3] ?? 'No winning format yet',
+              },
+              {
+                actionLabel: 'Export report',
+                eyebrow: 'Submission',
+                onAction: exportAnalysis,
+                text: 'Download the evidence pack used for deck screenshots, tutorial notes, and GitHub reproducibility.',
+                title: 'Analysis JSON',
+              },
+            ]}
+          />
           <ActionRow actions={[{ label: 'Export report', onClick: exportAnalysis }]} />
         </PageCard>
       </div>
@@ -1097,7 +1254,29 @@ function SidebarPage({
         }))}
         title="Saved Searches"
         toolbar={[{ label: 'Save active search', onClick: saveSearch }]}
-      />
+      >
+        <WorkflowGrid
+          cards={[
+            {
+              eyebrow: 'Repeatable research',
+              text: 'Saved searches store the active ICP, objective, tone, platform, and result count for repeat runs.',
+              title: `${savedSearches.length} saved search${savedSearches.length === 1 ? '' : 'es'}`,
+            },
+            {
+              actionLabel: 'Save active search',
+              eyebrow: 'Shortcut',
+              onAction: saveSearch,
+              text: 'Create a reusable query snapshot from the current Research filters.',
+              title: 'Capture current filters',
+            },
+            {
+              eyebrow: 'Use case',
+              text: 'Great for monthly content discovery using the same HR/L&D audience assumptions.',
+              title: 'Discovery playbook',
+            },
+          ]}
+        />
+      </DataPage>
     )
   }
 
@@ -1108,6 +1287,27 @@ function SidebarPage({
           subtitle="Editable guardrails for credible Amsterdam Game Lab and Pro Actief copy."
           title="Brand Voice"
         >
+          <WorkflowGrid
+            cards={[
+              {
+                eyebrow: 'Tone',
+                text: 'Keep copy practical, warm, and specific to workplace wellbeing without turning it into clickbait.',
+                title: 'Credible warm voice',
+              },
+              {
+                eyebrow: 'Claims',
+                text: 'Client names, outcomes, and metrics must come from supplied materials or verified imports.',
+                title: 'Evidence before proof',
+              },
+              {
+                actionLabel: 'Add rule',
+                eyebrow: 'Governance',
+                onAction: addBrandRule,
+                text: 'Add a reusable rule when a reviewer catches a phrase, claim, or tone choice that should be repeated or avoided.',
+                title: `${brandRules.length} active rule${brandRules.length === 1 ? '' : 's'}`,
+              },
+            ]}
+          />
           <div className="placeholder-grid">
             {brandRules.map((rule) => (
               <EditableCard
@@ -1148,7 +1348,29 @@ function SidebarPage({
         }))}
         title="Team Workspace"
         toolbar={[{ label: 'Add member', onClick: addTeamMember }]}
-      />
+      >
+        <WorkflowGrid
+          cards={[
+            {
+              eyebrow: 'Reviewers',
+              text: 'Add people responsible for content strategy, brand voice, metrics verification, and final approval.',
+              title: `${teamMembers.length} team member${teamMembers.length === 1 ? '' : 's'}`,
+            },
+            {
+              actionLabel: 'Add reviewer',
+              eyebrow: 'Assignment',
+              onAction: addTeamMember,
+              text: 'Create a review owner record before exporting deliverables.',
+              title: 'Human checkpoint',
+            },
+            {
+              eyebrow: 'Workflow',
+              text: 'Drafts remain internal until a reviewer checks source links, AGL tone, and no-fabrication guardrails.',
+              title: 'Review before publish',
+            },
+          ]}
+        />
+      </DataPage>
     )
   }
 
@@ -1158,6 +1380,27 @@ function SidebarPage({
         subtitle="Operational controls for a manual-review content workflow."
         title="Settings"
       >
+        <WorkflowGrid
+          cards={[
+            {
+              eyebrow: 'Storage',
+              text: 'Research rows and workspace records are stored locally in this browser for quick hackathon use.',
+              title: settings.storeLocally ? 'Local persistence on' : 'Local persistence off',
+            },
+            {
+              eyebrow: 'Publishing',
+              text: 'AGLI creates planning records and drafts, but never publishes directly to social platforms.',
+              title: settings.manualPublishingOnly ? 'Manual publishing enforced' : 'Manual publishing optional',
+            },
+            {
+              actionLabel: 'Export backup',
+              eyebrow: 'Backup',
+              onAction: exportAnalysis,
+              text: 'Download a JSON copy of all imported rows, patterns, drafts, and workspace records.',
+              title: 'Portable project file',
+            },
+          ]}
+        />
         <div className="settings-grid">
           <SettingToggle
             active={settings.requireVerifiedMetrics}
@@ -1224,6 +1467,7 @@ function PageCard({ children, subtitle, title }: { children: ReactNode; subtitle
 function DataPage({
   action,
   buttonLabel,
+  children,
   emptyText,
   onAction,
   rows,
@@ -1232,6 +1476,7 @@ function DataPage({
 }: {
   action: (message: string) => void
   buttonLabel?: string
+  children?: ReactNode
   emptyText: string
   onAction?: (id: string) => void
   rows: Array<{ id: string; cells: string[] }>
@@ -1241,6 +1486,7 @@ function DataPage({
   return (
     <div className="subpage">
       <PageCard title={title} subtitle="Workspace records created from imports or user actions.">
+        {children}
         <DataTable
           buttonLabel={buttonLabel}
           emptyText={emptyText}
@@ -1380,6 +1626,35 @@ function EmptyState({ text, title }: { text: string; title: string }) {
   )
 }
 
+function WorkflowGrid({
+  cards,
+}: {
+  cards: Array<{
+    actionLabel?: string
+    eyebrow: string
+    onAction?: () => void
+    text: string
+    title: string
+  }>
+}) {
+  return (
+    <div className="workflow-grid">
+      {cards.map((card) => (
+        <section className="workflow-card" key={`${card.eyebrow}-${card.title}`}>
+          <span>{card.eyebrow}</span>
+          <strong>{card.title}</strong>
+          <p>{card.text}</p>
+          {card.actionLabel && card.onAction ? (
+            <button className="link-button" onClick={card.onAction} type="button">
+              {card.actionLabel}
+            </button>
+          ) : null}
+        </section>
+      ))}
+    </div>
+  )
+}
+
 function SettingToggle({
   active,
   label,
@@ -1420,22 +1695,58 @@ function SelectBox({
   icon,
   label,
   onClick,
+  onSelect,
+  options,
   value,
 }: {
   icon?: ReactNode
   label: string
-  onClick: () => void
+  onClick?: () => void
+  onSelect?: (value: string) => void
+  options?: string[]
   value: string
 }) {
+  const [open, setOpen] = useState(false)
+  const menuOptions = [...new Set(options ?? [])]
+
   return (
-    <label className="select-box">
+    <div className="select-box">
       <span>{label}</span>
-      <button aria-label={value} className="select-control" onClick={onClick} type="button">
+      <button
+        aria-expanded={open}
+        aria-label={value}
+        className="select-control"
+        onClick={() => {
+          if (menuOptions.length > 0 && onSelect) {
+            setOpen((current) => !current)
+            return
+          }
+          onClick?.()
+        }}
+        type="button"
+      >
         {icon}
         <strong>{value}</strong>
         <ChevronDown size={17} />
       </button>
-    </label>
+      {open && menuOptions.length > 0 ? (
+        <div className="select-menu">
+          {menuOptions.map((option) => (
+            <button
+              className={option === value ? 'active' : ''}
+              key={option}
+              onClick={() => {
+                onSelect?.(option)
+                setOpen(false)
+              }}
+              type="button"
+            >
+              {option}
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
   )
 }
 
@@ -1590,11 +1901,6 @@ function nextIsoDate(days: number) {
   const date = new Date()
   date.setDate(date.getDate() + days)
   return date.toISOString().slice(0, 10)
-}
-
-function cycleValue<T>(current: T, options: T[]) {
-  const index = options.indexOf(current)
-  return options[(index + 1) % options.length]
 }
 
 function createId(prefix: string) {
