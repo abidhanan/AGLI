@@ -596,6 +596,7 @@
   color: #0f172a;
   font: inherit;
   font-size: 14px;
+  white-space: nowrap;
 }
 
 .select-control {
@@ -653,6 +654,7 @@
   font: inherit;
   font-size: 13px;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .select-menu button.active,
@@ -1055,6 +1057,7 @@
   cursor: pointer;
   justify-self: start;
   text-align: left;
+  white-space: nowrap;
 }
 
 .insight-disclaimer {
@@ -1101,6 +1104,7 @@
   font-size: 13px;
   font-weight: 760;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .draft-tabs {
@@ -1269,6 +1273,7 @@
   font: inherit;
   font-weight: 760;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .secondary-action {
@@ -1386,17 +1391,20 @@
   display: grid;
   grid-template-columns: 240px minmax(0, 1fr);
   gap: 18px;
-  align-items: start;
+  align-items: stretch;
 }
 
 .profile-avatar-card {
   display: grid;
   gap: 14px;
-  justify-items: start;
+  align-content: center;
+  justify-items: center;
   border: 1px solid #d9e1ea;
   border-radius: 7px;
   background: #fbfcfd;
   padding: 18px;
+  min-height: 100%;
+  text-align: center;
 }
 
 .profile-avatar-large {
@@ -1708,6 +1716,8 @@
   flex-wrap: wrap;
   gap: 10px;
   margin-top: 16px;
+  overflow-x: auto;
+  padding-bottom: 2px;
 }
 
 .compact-action {
@@ -1811,6 +1821,14 @@
   color: #0f172a;
   font: inherit;
   cursor: pointer;
+  gap: 12px;
+}
+
+.setting-toggle span {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .setting-toggle strong {

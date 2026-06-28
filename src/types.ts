@@ -57,6 +57,7 @@ export interface DraftInputs {
   tone: string
   productAngle: string
   selectedPattern: string
+  language?: 'en' | 'id' | 'nl'
 }
 
 export interface DraftOutput {

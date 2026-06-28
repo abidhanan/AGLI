@@ -141,6 +141,8 @@ const platformOptions: PlatformFilter[] = ['All Platforms', ...platforms]
 const icpOptions = ['HR & L&D Professionals', 'Team Leads', 'Managers', 'People Ops']
 const objectiveOptions = ['Awareness', 'Discovery Call', 'Thought Leadership', 'Workshop Demand']
 const toneOptions = ['Professional & Warm', 'Practical', 'Calm Expert', 'Direct']
+const brandOptions = ['Pro Actief', 'Amsterdam Game Lab']
+const pillarFallbackOptions = ['Stress prevention', 'Team reflection', 'Leadership', 'Learning culture', 'Feedback safety']
 const draftTabs: DraftTab[] = ['Post Copy', 'Hooks', 'Video Outline', 'Hashtags']
 const languageOptions: Array<{ label: string; value: Language }> = [
   { label: 'English', value: 'en' },
@@ -424,10 +426,351 @@ const translations: Record<Language, Record<string, string>> = {
   },
 }
 
+Object.assign(translations.id, {
+  'English': 'Inggris',
+  'Indonesia': 'Indonesia',
+  'Nederlands': 'Belanda',
+  'Pro Actief': 'Pro Actief',
+  'Amsterdam Game Lab': 'Amsterdam Game Lab',
+  'Stress prevention': 'Pencegahan stres',
+  'Team reflection': 'Refleksi tim',
+  'Leadership': 'Kepemimpinan',
+  'Learning culture': 'Budaya belajar',
+  'Feedback safety': 'Keamanan feedback',
+  'Import data first': 'Impor data dulu',
+  'Research date range': 'Rentang tanggal riset',
+  'Advanced filters': 'Filter lanjutan',
+  'How AGLI works': 'Cara kerja AGLI',
+  'Workspace notifications': 'Notifikasi workspace',
+  'Pattern evidence': 'Bukti pola',
+  'AGLI workspace': 'Workspace AGLI',
+  'Go-to-market overview': 'Ringkasan go-to-market',
+  'Live workspace summary. All numbers come from imported or user-created records.': 'Ringkasan workspace aktif. Semua angka berasal dari data impor atau catatan pengguna.',
+  'Research rows': 'Baris riset',
+  'Verified rows': 'Baris terverifikasi',
+  'Draft assets': 'Aset draft',
+  'Import research': 'Impor riset',
+  'Open research': 'Buka riset',
+  'Open patterns': 'Buka pola',
+  'Review calendar': 'Tinjau kalender',
+  'Research intake is empty': 'Intake riset masih kosong',
+  'Pattern engine waiting for data': 'Mesin pola menunggu data',
+  'Bring in platform exports or manual research rows before scoring any content pattern.': 'Masukkan export platform atau baris riset manual sebelum menilai pola konten.',
+  'Ranked rows are grouped into hooks, topics, formats, length guidance, and visual style signals.': 'Baris ranking dikelompokkan menjadi hook, topik, format, panduan durasi, dan sinyal gaya visual.',
+  'Drafts stay as internal review items until a human approves them for scheduling.': 'Draft tetap menjadi item review internal sampai manusia menyetujuinya untuk dijadwalkan.',
+  'Reusable hooks, topics, formats, and visual styles calculated from imported winners.': 'Hook, topik, format, dan gaya visual reusable yang dihitung dari konten pemenang impor.',
+  'Evidence': 'Bukti',
+  'Signal': 'Sinyal',
+  'Output': 'Output',
+  'Rows are ranked by views, engagement rate, shares, comments, and recency. Verification status stays visible.': 'Baris diranking berdasarkan views, engagement rate, share, komentar, dan recency. Status verifikasi tetap terlihat.',
+  'Pattern groups are only created from imported rows, so empty states are intentional until research is added.': 'Grup pola hanya dibuat dari baris impor, jadi empty state memang muncul sampai riset ditambahkan.',
+  'Export patterns': 'Ekspor pola',
+  'Export pattern': 'Ekspor pola',
+  'Export the exact ranked rows and pattern summary used to generate draft content.': 'Ekspor baris ranking dan ringkasan pola yang dipakai untuk membuat draft konten.',
+  'Reproducible evidence pack': 'Paket bukti reproducible',
+  'No hook groups yet': 'Belum ada grup hook',
+  'Import content rows first. The engine will group patterns by hook type, topic, format, length, and visual style.': 'Impor baris konten dulu. Mesin akan mengelompokkan pola berdasarkan tipe hook, topik, format, durasi, dan gaya visual.',
+  'No imported content': 'Belum ada konten impor',
+  'Publishing Calendar': 'Kalender Publikasi',
+  'Add draft': 'Tambah draft',
+  'Queue': 'Antrean',
+  'Next action': 'Aksi berikutnya',
+  'Guardrail': 'Guardrail',
+  'Only drafts saved from Draft Studio can be pushed into this calendar, keeping publishing manual.': 'Hanya draft yang disimpan dari Studio Draft yang bisa masuk kalender ini, sehingga publikasi tetap manual.',
+  'Add current draft': 'Tambah draft saat ini',
+  'Turn the current draft into a review item with a suggested date three days from now.': 'Ubah draft saat ini menjadi item review dengan saran tanggal tiga hari dari sekarang.',
+  'Schedule after review': 'Jadwalkan setelah review',
+  'Nothing auto-publishes. Calendar entries are planning records for the Amsterdam Game Lab team.': 'Tidak ada auto-publish. Entri kalender adalah catatan planning untuk tim Amsterdam Game Lab.',
+  'Save a draft and add it to the calendar to create the first scheduled item.': 'Simpan draft dan tambahkan ke kalender untuk membuat item jadwal pertama.',
+  'Content Library': 'Library Konten',
+  'Library': 'Library',
+  'Intake': 'Intake',
+  'Review': 'Review',
+  'Saved drafts and uploaded asset records will appear here.': 'Draft tersimpan dan catatan aset unggahan akan muncul di sini.',
+  'Saved drafts, uploaded asset records, and review notes are kept here for reuse in the submission.': 'Draft tersimpan, catatan aset unggahan, dan catatan review disimpan di sini untuk dipakai ulang dalam submission.',
+  'Add asset': 'Tambah aset',
+  'Open draft studio': 'Buka Studio Draft',
+  'Create asset record': 'Buat catatan aset',
+  'Add an asset placeholder, then rename it after a real deck, image set, or edited draft is ready.': 'Tambahkan placeholder aset, lalu ganti namanya setelah deck, image set, atau draft edit sudah siap.',
+  'Asset tracker': 'Tracker aset',
+  'Each item keeps a status so drafts do not get confused with approved publishing material.': 'Setiap item memiliki status agar draft tidak tertukar dengan materi publikasi yang sudah disetujui.',
+  'Human review required': 'Perlu review manusia',
+  'Performance report from the active imported research set.': 'Laporan performa dari set riset impor aktif.',
+  'Median engagement': 'Median engagement',
+  'Best platform': 'Platform terbaik',
+  'Sample size': 'Ukuran sampel',
+  'No data': 'Tidak ada data',
+  'No winning format yet': 'Belum ada format pemenang',
+  'Coverage': 'Coverage',
+  'Best signal': 'Sinyal terbaik',
+  'Submission': 'Submission',
+  'Reports compare platforms only after imported rows exist for those platforms.': 'Laporan membandingkan platform setelah baris impor tersedia untuk platform tersebut.',
+  'Import rows to identify the strongest platform.': 'Impor baris untuk menemukan platform terkuat.',
+  'Download the evidence pack used for deck screenshots, tutorial notes, and GitHub reproducibility.': 'Unduh paket bukti untuk screenshot deck, catatan tutorial, dan reproducibility GitHub.',
+  'Analysis JSON': 'JSON analisis',
+  'Export report': 'Ekspor laporan',
+  'Save the active Research filter to keep a repeatable discovery workflow.': 'Simpan filter Riset aktif agar workflow discovery bisa diulang.',
+  'Repeatable research': 'Riset berulang',
+  'Shortcut': 'Pintasan',
+  'Use case': 'Use case',
+  'Saved searches store the active ICP, objective, tone, platform, and result count for repeat runs.': 'Saved Searches menyimpan ICP, objective, tone, platform, dan jumlah hasil untuk run berikutnya.',
+  'Save active search': 'Simpan pencarian aktif',
+  'Create a reusable query snapshot from the current Research filters.': 'Buat snapshot query reusable dari filter Riset saat ini.',
+  'Capture current filters': 'Tangkap filter saat ini',
+  'Great for monthly content discovery using the same HR/L&D audience assumptions.': 'Cocok untuk discovery konten bulanan dengan asumsi audiens HR/L&D yang sama.',
+  'Discovery playbook': 'Playbook discovery',
+  'Editable guardrails for credible Amsterdam Game Lab and Pro Actief copy.': 'Guardrail yang bisa diedit untuk copy Amsterdam Game Lab dan Pro Actief yang kredibel.',
+  'Tone': 'Nada',
+  'Claims': 'Klaim',
+  'Governance': 'Governance',
+  'Keep copy practical, warm, and specific to workplace wellbeing without turning it into clickbait.': 'Jaga copy tetap praktis, hangat, dan spesifik untuk wellbeing kerja tanpa menjadi clickbait.',
+  'Credible warm voice': 'Suara hangat yang kredibel',
+  'Client names, outcomes, and metrics must come from supplied materials or verified imports.': 'Nama klien, outcome, dan metrik harus berasal dari materi yang disediakan atau impor terverifikasi.',
+  'Evidence before proof': 'Bukti sebelum klaim',
+  'Add rule': 'Tambah aturan',
+  'Add a reusable rule when a reviewer catches a phrase, claim, or tone choice that should be repeated or avoided.': 'Tambahkan aturan reusable ketika reviewer menemukan frasa, klaim, atau pilihan tone yang harus diulang atau dihindari.',
+  'Add tone rules, phrases to use, and claims to avoid before writing content.': 'Tambahkan aturan tone, frasa yang dipakai, dan klaim yang dihindari sebelum menulis konten.',
+  'No brand rules': 'Belum ada aturan brand',
+  'Team Workspace': 'Workspace Tim',
+  'Add member': 'Tambah anggota',
+  'Reviewers': 'Reviewer',
+  'Assignment': 'Penugasan',
+  'Workflow': 'Workflow',
+  'Add people responsible for content strategy, brand voice, metrics verification, and final approval.': 'Tambahkan orang yang bertanggung jawab atas strategi konten, brand voice, verifikasi metrik, dan approval akhir.',
+  'Add reviewer': 'Tambah reviewer',
+  'Create a review owner record before exporting deliverables.': 'Buat catatan owner review sebelum mengekspor deliverable.',
+  'Human checkpoint': 'Checkpoint manusia',
+  'Drafts remain internal until a reviewer checks source links, AGL tone, and no-fabrication guardrails.': 'Draft tetap internal sampai reviewer mengecek link sumber, tone AGL, dan guardrail tanpa fabrikasi.',
+  'Review before publish': 'Review sebelum publish',
+  'Add reviewers or content owners so every generated draft has a human checkpoint.': 'Tambahkan reviewer atau content owner agar setiap draft punya checkpoint manusia.',
+  'CSV': 'CSV',
+  'Demo': 'Demo',
+  'Scenario reset': 'Reset skenario',
+  'Download the current workspace, including rows, drafts, settings, and guardrails.': 'Unduh workspace saat ini, termasuk baris, draft, settings, dan guardrail.',
+  'Export workspace': 'Ekspor workspace',
+  'Import verified exports from LinkedIn, YouTube Studio, VidIQ, TubeBuddy, TikTok Creative Center, Instagram insights, or manual research.': 'Impor export terverifikasi dari LinkedIn, YouTube Studio, VidIQ, TubeBuddy, TikTok Creative Center, Instagram insights, atau riset manual.',
+  'Reset the integrated scenario rows when you need to show a clean hackathon walkthrough.': 'Reset baris skenario terintegrasi ketika perlu menampilkan walkthrough hackathon yang bersih.',
+  'Demo flow': 'Alur demo',
+  'Review flow': 'Alur review',
+  'Reporting flow': 'Alur laporan',
+  'End-to-end content run': 'Alur konten end-to-end',
+  'Research -> select a row -> Generate draft -> Save draft -> Add to Calendar.': 'Riset -> pilih baris -> Buat draft -> Simpan draft -> Tambahkan ke Kalender.',
+  'Drafts saved from Draft Studio appear in Content Library and can be scheduled manually.': 'Draft yang disimpan dari Studio Draft muncul di Library Konten dan bisa dijadwalkan manual.',
+  'Human review loop': 'Loop review manusia',
+  'Reports and Pattern Engine both update from the same filtered ranked rows.': 'Laporan dan Mesin Pola sama-sama diperbarui dari baris ranking yang sudah difilter.',
+  'Evidence pack': 'Paket bukti',
+  'Storage': 'Penyimpanan',
+  'Publishing': 'Publikasi',
+  'Backup': 'Backup',
+  'Draft is empty': 'Draft masih kosong',
+  'Search saved': 'Pencarian disimpan',
+  'Analysis exported': 'Analisis diekspor',
+  'Workspace cleared': 'Workspace dibersihkan',
+  'Imported': 'Diimpor',
+  'Verified': 'Terverifikasi',
+  'Sample': 'Sampel',
+  'Target length': 'Target durasi',
+  'Import date range': 'Impor rentang tanggal',
+  'No date': 'Tidak ada tanggal',
+  'Generate a draft to fill this tab.': 'Buat draft untuk mengisi tab ini.',
+})
+
+Object.assign(translations.nl, {
+  'English': 'Engels',
+  'Indonesia': 'Indonesisch',
+  'Nederlands': 'Nederlands',
+  'Pro Actief': 'Pro Actief',
+  'Amsterdam Game Lab': 'Amsterdam Game Lab',
+  'Stress prevention': 'Stresspreventie',
+  'Team reflection': 'Teamreflectie',
+  'Leadership': 'Leiderschap',
+  'Learning culture': 'Leercultuur',
+  'Feedback safety': 'Feedbackveiligheid',
+  'Import data first': 'Importeer eerst data',
+  'Research date range': 'Onderzoeksperiode',
+  'Advanced filters': 'Geavanceerde filters',
+  'How AGLI works': 'Hoe AGLI werkt',
+  'Workspace notifications': 'Workspace-notificaties',
+  'Pattern evidence': 'Patroonbewijs',
+  'AGLI workspace': 'AGLI workspace',
+  'Go-to-market overview': 'Go-to-market overzicht',
+  'Live workspace summary. All numbers come from imported or user-created records.': 'Live workspace-samenvatting. Alle cijfers komen uit geimporteerde of door gebruikers gemaakte records.',
+  'Research rows': 'Onderzoeksrijen',
+  'Verified rows': 'Geverifieerde rijen',
+  'Draft assets': 'Conceptassets',
+  'Import research': 'Onderzoek importeren',
+  'Open research': 'Onderzoek openen',
+  'Open patterns': 'Patronen openen',
+  'Review calendar': 'Kalender bekijken',
+  'Research intake is empty': 'Onderzoeksintake is leeg',
+  'Pattern engine waiting for data': 'Patroonmotor wacht op data',
+  'Bring in platform exports or manual research rows before scoring any content pattern.': 'Voeg platformexports of handmatige onderzoeksrijen toe voordat patronen worden gescoord.',
+  'Ranked rows are grouped into hooks, topics, formats, length guidance, and visual style signals.': 'Gerangschikte rijen worden gegroepeerd in hooks, onderwerpen, formats, lengterichtlijnen en visuele stijlen.',
+  'Drafts stay as internal review items until a human approves them for scheduling.': 'Concepten blijven interne review-items totdat een mens ze goedkeurt voor planning.',
+  'Reusable hooks, topics, formats, and visual styles calculated from imported winners.': 'Herbruikbare hooks, topics, formats en visuele stijlen berekend uit geimporteerde winnaars.',
+  'Evidence': 'Bewijs',
+  'Signal': 'Signaal',
+  'Output': 'Output',
+  'Rows are ranked by views, engagement rate, shares, comments, and recency. Verification status stays visible.': 'Rijen worden gerangschikt op views, engagement rate, shares, comments en recency. Verificatiestatus blijft zichtbaar.',
+  'Pattern groups are only created from imported rows, so empty states are intentional until research is added.': 'Patroongroepen worden alleen gemaakt uit geimporteerde rijen, dus lege staten zijn logisch tot onderzoek is toegevoegd.',
+  'Export patterns': 'Patronen exporteren',
+  'Export pattern': 'Patroon exporteren',
+  'Export the exact ranked rows and pattern summary used to generate draft content.': 'Exporteer exact de gerangschikte rijen en patroonsamenvatting die voor conceptcontent zijn gebruikt.',
+  'Reproducible evidence pack': 'Reproduceerbaar bewijspakket',
+  'No hook groups yet': 'Nog geen hookgroepen',
+  'Import content rows first. The engine will group patterns by hook type, topic, format, length, and visual style.': 'Importeer eerst contentrijen. De motor groepeert patronen op hooktype, onderwerp, format, lengte en visuele stijl.',
+  'No imported content': 'Geen geimporteerde content',
+  'Publishing Calendar': 'Publicatiekalender',
+  'Add draft': 'Concept toevoegen',
+  'Queue': 'Wachtrij',
+  'Next action': 'Volgende actie',
+  'Guardrail': 'Guardrail',
+  'Only drafts saved from Draft Studio can be pushed into this calendar, keeping publishing manual.': 'Alleen concepten die in Conceptstudio zijn opgeslagen kunnen naar deze kalender, zodat publicatie handmatig blijft.',
+  'Add current draft': 'Huidig concept toevoegen',
+  'Turn the current draft into a review item with a suggested date three days from now.': 'Zet het huidige concept om in een review-item met een voorgestelde datum over drie dagen.',
+  'Schedule after review': 'Plannen na review',
+  'Nothing auto-publishes. Calendar entries are planning records for the Amsterdam Game Lab team.': 'Niets publiceert automatisch. Kalenderitems zijn planningrecords voor het Amsterdam Game Lab-team.',
+  'Save a draft and add it to the calendar to create the first scheduled item.': 'Sla een concept op en voeg het toe aan de kalender om het eerste geplande item te maken.',
+  'Library': 'Bibliotheek',
+  'Intake': 'Intake',
+  'Review': 'Review',
+  'Saved drafts and uploaded asset records will appear here.': 'Opgeslagen concepten en geuploade assetrecords verschijnen hier.',
+  'Saved drafts, uploaded asset records, and review notes are kept here for reuse in the submission.': 'Opgeslagen concepten, assetrecords en reviewnotities worden hier bewaard voor hergebruik in de submission.',
+  'Add asset': 'Asset toevoegen',
+  'Open draft studio': 'Conceptstudio openen',
+  'Create asset record': 'Assetrecord maken',
+  'Add an asset placeholder, then rename it after a real deck, image set, or edited draft is ready.': 'Voeg een asset-placeholder toe en hernoem deze wanneer een deck, beeldset of bewerkt concept klaar is.',
+  'Asset tracker': 'Assettracker',
+  'Each item keeps a status so drafts do not get confused with approved publishing material.': 'Elk item heeft een status zodat concepten niet worden verward met goedgekeurd publicatiemateriaal.',
+  'Human review required': 'Menselijke review vereist',
+  'Performance report from the active imported research set.': 'Performancerapport uit de actieve geimporteerde onderzoeksset.',
+  'Median engagement': 'Mediaan engagement',
+  'Best platform': 'Beste platform',
+  'Sample size': 'Steekproefgrootte',
+  'No data': 'Geen data',
+  'No winning format yet': 'Nog geen winnend format',
+  'Coverage': 'Dekking',
+  'Best signal': 'Beste signaal',
+  'Submission': 'Submission',
+  'Reports compare platforms only after imported rows exist for those platforms.': 'Rapporten vergelijken platforms pas wanneer er geimporteerde rijen voor die platforms zijn.',
+  'Import rows to identify the strongest platform.': 'Importeer rijen om het sterkste platform te vinden.',
+  'Download the evidence pack used for deck screenshots, tutorial notes, and GitHub reproducibility.': 'Download het bewijspakket voor deckscreenshots, tutorialnotities en GitHub-reproduceerbaarheid.',
+  'Analysis JSON': 'Analyse-JSON',
+  'Export report': 'Rapport exporteren',
+  'Save the active Research filter to keep a repeatable discovery workflow.': 'Sla het actieve Research-filter op om een herhaalbare discovery workflow te bewaren.',
+  'Repeatable research': 'Herhaalbaar onderzoek',
+  'Shortcut': 'Snelkoppeling',
+  'Use case': 'Use case',
+  'Saved searches store the active ICP, objective, tone, platform, and result count for repeat runs.': 'Opgeslagen zoekopdrachten bewaren ICP, objective, tone, platform en resultaatcount voor herhaalde runs.',
+  'Save active search': 'Actieve zoekopdracht opslaan',
+  'Create a reusable query snapshot from the current Research filters.': 'Maak een herbruikbare querysnapshot van de huidige Research-filters.',
+  'Capture current filters': 'Huidige filters vastleggen',
+  'Great for monthly content discovery using the same HR/L&D audience assumptions.': 'Handig voor maandelijkse content discovery met dezelfde HR/L&D-aannames.',
+  'Discovery playbook': 'Discovery playbook',
+  'Editable guardrails for credible Amsterdam Game Lab and Pro Actief copy.': 'Bewerkbare guardrails voor geloofwaardige Amsterdam Game Lab- en Pro Actief-copy.',
+  'Tone': 'Toon',
+  'Claims': 'Claims',
+  'Governance': 'Governance',
+  'Keep copy practical, warm, and specific to workplace wellbeing without turning it into clickbait.': 'Houd copy praktisch, warm en specifiek voor workplace wellbeing zonder clickbait te worden.',
+  'Credible warm voice': 'Geloofwaardige warme stem',
+  'Client names, outcomes, and metrics must come from supplied materials or verified imports.': 'Klantnamen, outcomes en metrics moeten uit aangeleverde materialen of geverifieerde imports komen.',
+  'Evidence before proof': 'Bewijs voor claims',
+  'Add rule': 'Regel toevoegen',
+  'Add a reusable rule when a reviewer catches a phrase, claim, or tone choice that should be repeated or avoided.': 'Voeg een herbruikbare regel toe wanneer een reviewer een frase, claim of tone-keuze ziet die herhaald of vermeden moet worden.',
+  'Add tone rules, phrases to use, and claims to avoid before writing content.': 'Voeg toneregels, te gebruiken frases en te vermijden claims toe voordat je content schrijft.',
+  'No brand rules': 'Geen brandregels',
+  'Team Workspace': 'Teamworkspace',
+  'Add member': 'Lid toevoegen',
+  'Reviewers': 'Reviewers',
+  'Assignment': 'Toewijzing',
+  'Workflow': 'Workflow',
+  'Add people responsible for content strategy, brand voice, metrics verification, and final approval.': 'Voeg mensen toe die verantwoordelijk zijn voor contentstrategie, brand voice, metricverificatie en finale goedkeuring.',
+  'Add reviewer': 'Reviewer toevoegen',
+  'Create a review owner record before exporting deliverables.': 'Maak een review-ownerrecord voordat deliverables worden geexporteerd.',
+  'Human checkpoint': 'Menselijke checkpoint',
+  'Drafts remain internal until a reviewer checks source links, AGL tone, and no-fabrication guardrails.': 'Concepten blijven intern totdat een reviewer bronlinks, AGL-tone en no-fabrication guardrails controleert.',
+  'Review before publish': 'Review voor publicatie',
+  'Add reviewers or content owners so every generated draft has a human checkpoint.': 'Voeg reviewers of content owners toe zodat elk gegenereerd concept een menselijke checkpoint heeft.',
+  'CSV': 'CSV',
+  'Demo': 'Demo',
+  'Scenario reset': 'Scenario resetten',
+  'Download the current workspace, including rows, drafts, settings, and guardrails.': 'Download de huidige workspace inclusief rijen, concepten, instellingen en guardrails.',
+  'Export workspace': 'Workspace exporteren',
+  'Import verified exports from LinkedIn, YouTube Studio, VidIQ, TubeBuddy, TikTok Creative Center, Instagram insights, or manual research.': 'Importeer geverifieerde exports van LinkedIn, YouTube Studio, VidIQ, TubeBuddy, TikTok Creative Center, Instagram Insights of handmatig onderzoek.',
+  'Reset the integrated scenario rows when you need to show a clean hackathon walkthrough.': 'Reset de geintegreerde scenariorijen wanneer je een schone hackathon-walkthrough wilt tonen.',
+  'Demo flow': 'Demoflow',
+  'Review flow': 'Reviewflow',
+  'Reporting flow': 'Rapportageflow',
+  'End-to-end content run': 'End-to-end contentrun',
+  'Research -> select a row -> Generate draft -> Save draft -> Add to Calendar.': 'Research -> selecteer een rij -> Genereer concept -> Sla concept op -> Voeg toe aan kalender.',
+  'Drafts saved from Draft Studio appear in Content Library and can be scheduled manually.': 'Concepten uit Conceptstudio verschijnen in Content Library en kunnen handmatig worden gepland.',
+  'Human review loop': 'Menselijke reviewloop',
+  'Reports and Pattern Engine both update from the same filtered ranked rows.': 'Reports en Pattern Engine worden beide bijgewerkt vanuit dezelfde gefilterde gerangschikte rijen.',
+  'Evidence pack': 'Bewijspakket',
+  'Draft is empty': 'Concept is leeg',
+  'Search saved': 'Zoekopdracht opgeslagen',
+  'Analysis exported': 'Analyse geexporteerd',
+  'Workspace cleared': 'Workspace gewist',
+  'Imported': 'Geimporteerd',
+  'Verified': 'Geverifieerd',
+  'Sample': 'Sample',
+  'Target length': 'Doellengte',
+  'Import date range': 'Importeer datumbereik',
+  'No date': 'Geen datum',
+  'Generate a draft to fill this tab.': 'Genereer een concept om dit tabblad te vullen.',
+})
+
+const dynamicTranslations: Partial<
+  Record<Language, Array<[RegExp, (...matches: string[]) => string]>>
+> = {
+  id: [
+    [/^(\d+) rows ready for scoring$/, (value) => `${value} baris siap diskor`],
+    [/^(\d+) rows in pattern sample$/, (value) => `${value} baris dalam sampel pola`],
+    [/^(\d+) calendar items?$/, (value) => `${value} item kalender`],
+    [/^(\d+) ranked rows?$/, (value) => `${value} baris ranking`],
+    [/^(\d+) hook groups found$/, (value) => `${value} grup hook ditemukan`],
+    [/^(\d+) items? in calendar$/, (value) => `${value} item di kalender`],
+    [/^(\d+) saved assets?$/, (value) => `${value} aset tersimpan`],
+    [/^(\d+) platform reports?$/, (value) => `${value} laporan platform`],
+    [/^(\d+) saved searches$/, (value) => `${value} pencarian tersimpan`],
+    [/^(\d+) active rules?$/, (value) => `${value} aturan aktif`],
+    [/^(\d+) team members?$/, (value) => `${value} anggota tim`],
+    [/^(\d+) active research rows$/, (value) => `${value} baris riset aktif`],
+    [/^Sample: (\d+)$/, (value) => `Sampel: ${value}`],
+    [/^Target length: (.+)$/, (value) => `Target durasi: ${value}`],
+    [/^(.+) currently has the strongest average score\.$/, (platform) => `${platform} saat ini punya skor rata-rata terkuat.`],
+  ],
+  nl: [
+    [/^(\d+) rows ready for scoring$/, (value) => `${value} rijen klaar om te scoren`],
+    [/^(\d+) rows in pattern sample$/, (value) => `${value} rijen in patroonsample`],
+    [/^(\d+) calendar items?$/, (value) => `${value} kalenderitems`],
+    [/^(\d+) ranked rows?$/, (value) => `${value} gerangschikte rijen`],
+    [/^(\d+) hook groups found$/, (value) => `${value} hookgroepen gevonden`],
+    [/^(\d+) items? in calendar$/, (value) => `${value} items in kalender`],
+    [/^(\d+) saved assets?$/, (value) => `${value} opgeslagen assets`],
+    [/^(\d+) platform reports?$/, (value) => `${value} platformrapporten`],
+    [/^(\d+) saved searches$/, (value) => `${value} opgeslagen zoekopdrachten`],
+    [/^(\d+) active rules?$/, (value) => `${value} actieve regels`],
+    [/^(\d+) team members?$/, (value) => `${value} teamleden`],
+    [/^(\d+) active research rows$/, (value) => `${value} actieve onderzoeksrijen`],
+    [/^Sample: (\d+)$/, (value) => `Sample: ${value}`],
+    [/^Target length: (.+)$/, (value) => `Doellengte: ${value}`],
+    [/^(.+) currently has the strongest average score\.$/, (platform) => `${platform} heeft momenteel de sterkste gemiddelde score.`],
+  ],
+}
+
 const LanguageContext = createContext<Language>('en')
 
 function translate(text: string, language: Language) {
-  return translations[language][text] ?? text
+  const direct = translations[language][text]
+  if (direct) return direct
+
+  for (const [pattern, formatter] of dynamicTranslations[language] ?? []) {
+    const match = text.match(pattern)
+    if (match) return formatter(...match.slice(1))
+  }
+
+  return text
 }
 
 function useT() {
@@ -480,7 +823,7 @@ const defaultSettings: AppSettings = {
 const defaultWorkspaceProfile: WorkspaceProfile = {
   avatar: '',
   email: 'content@amsterdamgamelab.nl',
-  name: 'AGLI workspace',
+  name: 'Abid Hanan',
   role: 'Content strategist',
   timezone: 'Europe/Amsterdam',
 }
@@ -699,9 +1042,11 @@ function App() {
   const [objective, setObjective] = useStoredState('agli:objective', objectiveOptions[0])
   const [tone, setTone] = useStoredState('agli:tone', toneOptions[0])
   const [draftPlatform, setDraftPlatform] = useStoredState<Platform>('agli:draftPlatform', 'LinkedIn')
+  const [draftBrand, setDraftBrand] = useStoredState('agli:draftBrand', brandOptions[0])
+  const [draftPillar, setDraftPillar] = useStoredState('agli:draftPillar', pillarFallbackOptions[1])
   const [draftTab, setDraftTab] = useState<DraftTab>('Post Copy')
-  const [draftText, setDraftText] = useStoredState('agli:draftText', '')
-  const [draftOutput, setDraftOutput] = useStoredState<DraftOutput | null>('agli:draftOutput', null)
+  const [draftText, setDraftText] = useState('')
+  const [draftOutput, setDraftOutput] = useState<DraftOutput | null>(null)
   const [cta, setCta] = useStoredState('agli:cta', '')
   const [, setNotice] = useState('No fabricated claims')
   const [contentItems, setContentItems] = useStoredState<ContentItem[]>('agli:contentItems', demoContentItems)
@@ -734,10 +1079,42 @@ function App() {
     [filteredRanked, selectedContentId],
   )
   const contentPillar = summary.topTopics[0]?.label ?? 'Import data first'
+  const draftPillarOptions = useMemo(
+    () => [...new Set([contentPillar, ...pillarFallbackOptions].filter((item) => item && item !== 'Import data first'))],
+    [contentPillar],
+  )
+  const activeDraftPillar = draftPillarOptions.includes(draftPillar)
+    ? draftPillar
+    : (draftPillarOptions[0] ?? pillarFallbackOptions[1])
 
   useEffect(() => {
     setTablePage(1)
   }, [platformFilter, contentItems.length])
+
+  useEffect(() => {
+    if (workspaceProfile.name !== 'AGLI workspace') return
+    setWorkspaceProfile((current) =>
+      current.name === 'AGLI workspace' ? { ...current, name: 'Abid Hanan' } : current,
+    )
+  }, [setWorkspaceProfile, workspaceProfile.name])
+
+  useEffect(() => {
+    if (draftPillar === activeDraftPillar) return
+    setDraftPillar(activeDraftPillar)
+  }, [activeDraftPillar, draftPillar, setDraftPillar])
+
+  useEffect(() => {
+    setDraftText('')
+    setDraftOutput(null)
+    setCta('')
+  }, [activeDraftPillar, draftBrand, draftPlatform, icp, objective, selectedContentId, setCta, tone])
+
+  useEffect(() => {
+    if (activePage === 'Research') return
+    setDraftText('')
+    setDraftOutput(null)
+    setCta('')
+  }, [activePage, setCta])
 
   useEffect(() => {
     const seedVersion = window.localStorage.getItem('agli:demoSeedVersion')
@@ -783,6 +1160,9 @@ function App() {
   function logout() {
     setAuthView('landing')
     setActivePage('Overview')
+    setDraftText('')
+    setDraftOutput(null)
+    setCta('')
     setActivePanel(null)
     setProfileMenuOpen(false)
     setMobileMenuOpen(false)
@@ -842,8 +1222,9 @@ function App() {
         objective,
         audience: icp,
         tone,
-        productAngle: 'Pro Actief stress-prevention serious game using the IGLO model',
-        selectedPattern: summary.topHooks[0]?.label ?? references[0]?.hookType ?? '',
+        language,
+        productAngle: `${draftBrand} ${activeDraftPillar} content for the Pro Actief stress-prevention serious game using the IGLO model`,
+        selectedPattern: `${activeDraftPillar}: ${summary.topHooks[0]?.label ?? references[0]?.hookType ?? ''}`,
       },
       summary,
       references,
@@ -851,7 +1232,7 @@ function App() {
 
     setDraftOutput(output)
     setDraftText(output.postCopy)
-    setCta(buildCta(objective, draftPlatform))
+    setCta(buildCta(objective, draftPlatform, language))
     action(`${draftPlatform} draft generated for ${objective}`)
   }
 
@@ -1070,10 +1451,12 @@ function App() {
           <ResearchPage
             action={action}
             addDraftToCalendar={addDraftToCalendar}
-            contentPillar={contentPillar}
             cta={cta}
             dateLabel={dateRangeLabel(filteredRanked)}
+            draftBrand={draftBrand}
             draftOutput={draftOutput}
+            draftPillar={activeDraftPillar}
+            draftPillarOptions={draftPillarOptions}
             draftPlatform={draftPlatform}
             draftTab={draftTab}
             draftText={draftText}
@@ -1089,6 +1472,8 @@ function App() {
             saveSearch={saveSearch}
             selectedContentId={selectedContentId}
             setCta={setCta}
+            setDraftBrand={setDraftBrand}
+            setDraftPillar={setDraftPillar}
             setDraftPlatform={setDraftPlatform}
             setDraftTab={setDraftTab}
             setDraftText={setDraftText}
@@ -1345,10 +1730,12 @@ function AuthScreen({
 function ResearchPage({
   action,
   addDraftToCalendar,
-  contentPillar,
   cta,
   dateLabel,
+  draftBrand,
   draftOutput,
+  draftPillar,
+  draftPillarOptions,
   draftPlatform,
   draftTab,
   draftText,
@@ -1364,6 +1751,8 @@ function ResearchPage({
   saveSearch,
   selectedContentId,
   setCta,
+  setDraftBrand,
+  setDraftPillar,
   setDraftPlatform,
   setDraftTab,
   setDraftText,
@@ -1379,10 +1768,12 @@ function ResearchPage({
 }: {
   action: (message: string) => void
   addDraftToCalendar: () => void
-  contentPillar: string
   cta: string
   dateLabel: string
+  draftBrand: string
   draftOutput: DraftOutput | null
+  draftPillar: string
+  draftPillarOptions: string[]
   draftPlatform: Platform
   draftTab: DraftTab
   draftText: string
@@ -1398,6 +1789,8 @@ function ResearchPage({
   saveSearch: () => void
   selectedContentId: string
   setCta: (value: string) => void
+  setDraftBrand: (value: string) => void
+  setDraftPillar: (value: string) => void
   setDraftPlatform: (value: Platform) => void
   setDraftTab: (value: DraftTab) => void
   setDraftText: (value: string) => void
@@ -1502,7 +1895,7 @@ function ResearchPage({
                         <td>{formatDate(row.date)}</td>
                         <td>
                           <span className={`confidence ${row.sourceQuality}`}>
-                            {confidenceLabel(row.sourceQuality)}
+                            {t(confidenceLabel(row.sourceQuality))}
                           </span>
                         </td>
                       </tr>
@@ -1566,15 +1959,15 @@ function ResearchPage({
                   <div className="insight-column" key={column.title}>
                     <div className="insight-heading">
                       {column.icon}
-                      <strong>{column.title}</strong>
+                      <strong>{t(column.title)}</strong>
                     </div>
                     <ol>
                       {column.items.map((item) => (
-                        <li key={item}>{item}</li>
+                        <li key={item}>{t(item)}</li>
                       ))}
                     </ol>
                     <button className="link-button" onClick={() => openPanel('patterns')} type="button">
-                      {column.link}
+                      {t(column.link)}
                     </button>
                   </div>
                 ))}
@@ -1614,8 +2007,24 @@ function ResearchPage({
 
           <div className="draft-scroll">
             <div className="draft-form-grid">
-                <SelectBox label="Brand / Client" onSelect={() => action('Pro Actief selected')} options={['Pro Actief', 'Amsterdam Game Lab']} value="Pro Actief" />
-              <SelectBox label="Content Pillar" onSelect={() => action('Pillar comes from imported patterns')} options={[contentPillar, 'Stress prevention', 'Team reflection', 'Leadership']} value={contentPillar} />
+              <SelectBox
+                label="Brand / Client"
+                onSelect={(value) => {
+                  setDraftBrand(value)
+                  action(`${value} selected`)
+                }}
+                options={brandOptions}
+                value={draftBrand}
+              />
+              <SelectBox
+                label="Content Pillar"
+                onSelect={(value) => {
+                  setDraftPillar(value)
+                  action(`${value} pillar selected`)
+                }}
+                options={draftPillarOptions}
+                value={draftPillar}
+              />
               <SelectBox icon={<PlatformBadge platform={draftPlatform} />} label="Platform" onSelect={(value) => setDraftPlatform(value as Platform)} options={platforms} value={draftPlatform} />
               <SelectBox label="Objective" onSelect={setObjective} options={objectiveOptions} value={objective} />
             </div>
@@ -1640,7 +2049,6 @@ function ResearchPage({
             ) : (
               <DraftTabContent
                 draftOutput={draftOutput}
-                rankedContent={filteredRanked}
                 summary={summary}
                 tab={draftTab}
               />
@@ -1684,31 +2092,29 @@ function ResearchPage({
 
 function DraftTabContent({
   draftOutput,
-  rankedContent,
   summary,
   tab,
 }: {
   draftOutput: DraftOutput | null
-  rankedContent: RankedContent[]
   summary: PatternSummary
   tab: Exclude<DraftTab, 'Post Copy'>
 }) {
   const t = useT()
   const content = useMemo(() => {
+    if (!draftOutput) return []
+
     if (tab === 'Hooks') {
-      return draftOutput?.hooks.length
-        ? draftOutput.hooks
-        : rankedContent.slice(0, 5).map((item) => item.hook).filter(Boolean)
+      return draftOutput.hooks
     }
 
     if (tab === 'Video Outline') {
-      return draftOutput?.videoScript.map(
+      return draftOutput.videoScript.map(
         (line) => `${line.time}: ${line.scene} VO: ${line.voiceover} Text: ${line.onScreenText}`,
-      ) ?? []
+      )
     }
 
     return buildHashtags(summary)
-  }, [draftOutput, rankedContent, summary, tab])
+  }, [draftOutput, summary, tab])
 
   if (content.length === 0) {
     return (
@@ -2136,15 +2542,15 @@ function SidebarPage({
                 <div className="pattern-block" key={column.title}>
                   <div className="insight-heading">
                     {column.icon}
-                    <strong>{column.title}</strong>
+                    <strong>{t(column.title)}</strong>
                   </div>
                   <ol>
                     {column.items.map((item) => (
-                      <li key={item}>{item}</li>
+                      <li key={item}>{t(item)}</li>
                     ))}
                   </ol>
                   <button className="link-button" onClick={exportAnalysis} type="button">
-                    Export pattern
+                    {t('Export pattern')}
                   </button>
                 </div>
               ))}
@@ -2960,7 +3366,23 @@ function panelLabel(panel: PanelKey) {
   return labels[panel]
 }
 
-function buildCta(objective: string, platform: Platform) {
+function buildCta(objective: string, platform: Platform, language: Language) {
+  if (language === 'id') {
+    if (objective === 'Discovery Call') return 'Jadwalkan fit check singkat Pro Actief bersama Amsterdam Game Lab.'
+    if (objective === 'Workshop Demand') return 'Ajak team lead mencoba latihan ini di workshop berikutnya.'
+    if (objective === 'Thought Leadership') return 'Simpan pertanyaan ini untuk percakapan leadership berikutnya.'
+    if (platform === 'TikTok' || platform === 'Instagram') return 'Simpan untuk check-in tim berikutnya.'
+    return 'Bagikan satu kebiasaan kecil tim yang membuat stres lebih mudah dibahas.'
+  }
+
+  if (language === 'nl') {
+    if (objective === 'Discovery Call') return 'Plan een korte Pro Actief fit check met Amsterdam Game Lab.'
+    if (objective === 'Workshop Demand') return 'Laat je teamleider deze oefening in de volgende workshop testen.'
+    if (objective === 'Thought Leadership') return 'Bewaar deze vraag voor je volgende leiderschapsgesprek.'
+    if (platform === 'TikTok' || platform === 'Instagram') return 'Bewaar dit voor je volgende teamcheck-in.'
+    return 'Deel een kleine teamgewoonte die stress makkelijker bespreekbaar maakt.'
+  }
+
   if (objective === 'Discovery Call') return 'Book a short Pro Actief fit check with Amsterdam Game Lab.'
   if (objective === 'Workshop Demand') return 'Invite your team lead to test this exercise in the next workshop.'
   if (objective === 'Thought Leadership') return 'Save this question for your next leadership conversation.'
