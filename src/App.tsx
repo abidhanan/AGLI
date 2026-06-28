@@ -690,7 +690,7 @@ const demoTeamMembers: TeamMember[] = [
 
 function App() {
   const [authView, setAuthView] = useStoredState<AuthView>('agli:authView', 'landing')
-  const [activePage, setActivePage] = useState<PageKey>('Overview')
+  const [activePage, setActivePage] = useStoredState<PageKey>('agli:activePage', 'Overview')
   const [icp, setIcp] = useStoredState('agli:icp', icpOptions[0])
   const [platformFilter, setPlatformFilter] = useStoredState<PlatformFilter>(
     'agli:platformFilter',
@@ -1774,8 +1774,13 @@ function UtilityPanel({
   }
 
   return (
-    <div className="utility-panel-shell" role="dialog" aria-label={t(panelTitle)}>
-      <div className="utility-panel">
+    <div
+      className="utility-panel-shell"
+      onClick={close}
+      role="dialog"
+      aria-label={t(panelTitle)}
+    >
+      <div className="utility-panel" onClick={(event) => event.stopPropagation()}>
         <div className="utility-panel-head">
           <div>
             <span>AGLI workspace</span>
