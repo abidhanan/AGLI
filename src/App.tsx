@@ -16,6 +16,7 @@ import {
   Keyboard,
   LineChart,
   LogOut,
+  Menu,
   MessageSquare,
   Search,
   Settings,
@@ -689,7 +690,7 @@ const demoTeamMembers: TeamMember[] = [
 
 function App() {
   const [authView, setAuthView] = useStoredState<AuthView>('agli:authView', 'landing')
-  const [activePage, setActivePage] = useState<PageKey>('Research')
+  const [activePage, setActivePage] = useState<PageKey>('Overview')
   const [icp, setIcp] = useStoredState('agli:icp', icpOptions[0])
   const [platformFilter, setPlatformFilter] = useStoredState<PlatformFilter>(
     'agli:platformFilter',
@@ -715,6 +716,7 @@ function App() {
   const [tablePage, setTablePage] = useState(1)
   const [activePanel, setActivePanel] = useState<PanelKey | null>(null)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const rankedContent = useMemo(() => rankContent(contentItems), [contentItems])
   const filteredRanked = useMemo(
@@ -757,6 +759,7 @@ function App() {
     setActivePage(page)
     setActivePanel(null)
     setProfileMenuOpen(false)
+    setMobileMenuOpen(false)
   }
 
   function loadDemoWorkspace() {
@@ -773,14 +776,16 @@ function App() {
 
   function enterApp() {
     setAuthView('app')
+    setActivePage('Overview')
     loadDemoWorkspace()
   }
 
   function logout() {
     setAuthView('landing')
-    setActivePage('Research')
+    setActivePage('Overview')
     setActivePanel(null)
     setProfileMenuOpen(false)
+    setMobileMenuOpen(false)
   }
 
   function handleCsvUpload(event: ChangeEvent<HTMLInputElement>) {
@@ -971,11 +976,25 @@ function App() {
 
   return (
     <LanguageContext.Provider value={language}>
-    <div className="prototype-shell">
+    <div className={`prototype-shell ${mobileMenuOpen ? 'mobile-nav-open' : ''}`}>
+      <button
+        aria-label={translate('Close navigation', language)}
+        className="mobile-sidebar-scrim"
+        onClick={() => setMobileMenuOpen(false)}
+        type="button"
+      />
       <aside className="sidebar">
         <div className="brand-block">
           <img alt="AGLI robot mark" src="/assets/agli-logo.jpeg" />
           <strong>AGLI</strong>
+          <button
+            aria-label={translate('Close navigation', language)}
+            className="sidebar-close"
+            onClick={() => setMobileMenuOpen(false)}
+            type="button"
+          >
+            <X size={18} />
+          </button>
         </div>
 
         <nav className="nav-list" aria-label="Main navigation">
@@ -989,6 +1008,7 @@ function App() {
                 setActivePage(item.label)
                 setActivePanel(null)
                 setProfileMenuOpen(false)
+                setMobileMenuOpen(false)
               }}
             />
           ))}
@@ -1007,6 +1027,7 @@ function App() {
                 setActivePage(item.label)
                 setActivePanel(null)
                 setProfileMenuOpen(false)
+                setMobileMenuOpen(false)
               }}
             />
           ))}
@@ -1016,6 +1037,14 @@ function App() {
 
       <main className="research-page">
         <header className="research-topbar">
+          <button
+            aria-label={translate('Open navigation', language)}
+            className="mobile-menu-button"
+            onClick={() => setMobileMenuOpen(true)}
+            type="button"
+          >
+            <Menu size={22} />
+          </button>
           <h1>{translate(activePage, language)}</h1>
           <div className="status-strip">
             <ShieldCheck size={21} />
@@ -1148,14 +1177,27 @@ function ProfileMenu({
   setOpen: (updater: (current: boolean) => boolean) => void
 }) {
   const t = useT()
+  const menuRef = useRef<HTMLDivElement | null>(null)
 
   function openProfilePage(page: PageKey) {
     setOpen(() => false)
     openPage(page)
   }
 
+  useEffect(() => {
+    if (!open) return
+
+    function closeOnOutsidePointer(event: PointerEvent) {
+      if (menuRef.current?.contains(event.target as Node)) return
+      setOpen(() => false)
+    }
+
+    document.addEventListener('pointerdown', closeOnOutsidePointer)
+    return () => document.removeEventListener('pointerdown', closeOnOutsidePointer)
+  }, [open, setOpen])
+
   return (
-    <div className="topbar-user-wrap">
+    <div className="topbar-user-wrap" ref={menuRef}>
       {open ? (
         <div className="profile-menu topbar-profile-menu">
           <button onClick={() => openProfilePage('Profile')} type="button">
@@ -2794,7 +2836,29 @@ function SelectBox({
   const [open, setOpen] = useState(false)
   const [menuPosition, setMenuPosition] = useState({ left: 0, top: 0, width: 0 })
   const buttonRef = useRef<HTMLButtonElement | null>(null)
+  const menuRef = useRef<HTMLDivElement | null>(null)
   const menuOptions = [...new Set(options ?? [])]
+
+  useEffect(() => {
+    if (!open) return
+
+    function closeOnOutsidePointer(event: PointerEvent) {
+      const target = event.target as Node
+      if (buttonRef.current?.contains(target) || menuRef.current?.contains(target)) return
+      setOpen(false)
+    }
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === 'Escape') setOpen(false)
+    }
+
+    document.addEventListener('pointerdown', closeOnOutsidePointer, true)
+    document.addEventListener('keydown', closeOnEscape)
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsidePointer, true)
+      document.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [open])
 
   function toggleMenu() {
     if (menuOptions.length === 0 || !onSelect) {
@@ -2802,15 +2866,15 @@ function SelectBox({
       return
     }
 
-    const rect = buttonRef.current?.getBoundingClientRect()
-    if (rect) {
-      const menuHeight = Math.min(260, menuOptions.length * 40 + 12)
-      const width = Math.max(rect.width, 180)
+      const rect = buttonRef.current?.getBoundingClientRect()
+      if (rect) {
+        const menuHeight = Math.min(260, menuOptions.length * 40 + 12)
+      const width = Math.max(rect.width, 196)
       const left = Math.min(Math.max(12, rect.left), window.innerWidth - width - 12)
-      const preferredTop = rect.bottom + 6
+      const preferredTop = rect.bottom + 9
       const top =
         preferredTop + menuHeight > window.innerHeight - 12
-          ? Math.max(12, rect.top - menuHeight - 6)
+          ? Math.max(12, rect.top - menuHeight - 9)
           : preferredTop
 
       setMenuPosition({ left, top, width })
@@ -2838,6 +2902,7 @@ function SelectBox({
         ? createPortal(
         <div
           className="select-menu select-menu-floating"
+          ref={menuRef}
           style={{ left: menuPosition.left, top: menuPosition.top, width: menuPosition.width }}
         >
           {menuOptions.map((option) => (
