@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" role="img" aria-labelledby="title desc">
+  <title id="title">AGLI robot mark</title>
+  <desc id="desc">Amsterdam Game Lab maze mark with a robot head in the center.</desc>
+  <g>
+    <rect x="35" y="30" width="150" height="150" fill="#111"/>
+    <rect x="58" y="53" width="104" height="104" fill="#fff"/>
+    <rect x="76" y="70" width="88" height="84" fill="#111"/>
+  </g>
+  <g transform="translate(82 92)">
+    <rect x="0" y="0" width="66" height="48" rx="9" fill="#fff" stroke="#007569" stroke-width="7"/>
+    <circle cx="22" cy="25" r="5.5" fill="#007569"/>
+    <circle cx="44" cy="25" r="5.5" fill="#007569"/>
+    <path d="M24 36h18" stroke="#007569" stroke-width="5" stroke-linecap="round"/>
+  </g>
+</svg>

@@ -4,13 +4,18 @@ import {
   CalendarDays,
   ChevronDown,
   CircleHelp,
-  Copy,
+  Database,
+  Eye,
+  EyeOff,
   FileText,
+  Filter,
   Folder,
   Home,
   Image as ImageIcon,
   Info,
+  Keyboard,
   LineChart,
+  LogOut,
   MessageSquare,
   Search,
   Settings,
@@ -20,13 +25,16 @@ import {
   Tags,
   Trash2,
   Upload,
+  User,
   Users,
   Video,
   X,
   Zap,
 } from 'lucide-react'
 import {
+  createContext,
   useEffect,
+  useContext,
   useMemo,
   useRef,
   useState,
@@ -46,7 +54,17 @@ import {
 import type { ContentItem, DraftOutput, PatternSummary, Platform, RankedContent } from './types'
 
 type DraftTab = 'Post Copy' | 'Hooks' | 'Video Outline' | 'Hashtags'
-type PanelKey = 'help' | 'notifications' | 'filters' | 'dateRange' | 'profile' | 'sources' | 'shortcuts' | 'patterns'
+type AuthView = 'landing' | 'login' | 'app'
+type Language = 'en' | 'id' | 'nl'
+type PanelKey =
+  | 'help'
+  | 'notifications'
+  | 'filters'
+  | 'dateRange'
+  | 'patterns'
+  | 'profile'
+  | 'dataSources'
+  | 'shortcuts'
 type PageKey =
   | 'Overview'
   | 'Research'
@@ -58,6 +76,9 @@ type PageKey =
   | 'Brand Voice'
   | 'Team'
   | 'Settings'
+  | 'Profile'
+  | 'Data Sources'
+  | 'Shortcuts'
 type PlatformFilter = Platform | 'All Platforms'
 
 interface CalendarItem {
@@ -103,9 +124,11 @@ interface AppSettings {
   manualPublishingOnly: boolean
   reviewBeforeExport: boolean
   storeLocally: boolean
+  language: Language
 }
 
 interface WorkspaceProfile {
+  avatar: string
   email: string
   name: string
   role: string
@@ -118,6 +141,298 @@ const icpOptions = ['HR & L&D Professionals', 'Team Leads', 'Managers', 'People 
 const objectiveOptions = ['Awareness', 'Discovery Call', 'Thought Leadership', 'Workshop Demand']
 const toneOptions = ['Professional & Warm', 'Practical', 'Calm Expert', 'Direct']
 const draftTabs: DraftTab[] = ['Post Copy', 'Hooks', 'Video Outline', 'Hashtags']
+const languageOptions: Array<{ label: string; value: Language }> = [
+  { label: 'English', value: 'en' },
+  { label: 'Indonesia', value: 'id' },
+  { label: 'Nederlands', value: 'nl' },
+]
+
+const translations: Record<Language, Record<string, string>> = {
+  en: {},
+  id: {
+    'Overview': 'Ringkasan',
+    'Research': 'Riset',
+    'Pattern Engine': 'Mesin Pola',
+    'Calendar': 'Kalender',
+    'Content Library': 'Library Konten',
+    'Reports': 'Laporan',
+    'Saved Searches': 'Pencarian',
+    'Brand Voice': 'Suara Brand',
+    'Team': 'Tim',
+    'Settings': 'Pengaturan',
+    'Profile': 'Profil',
+    'Data Sources': 'Sumber Data',
+    'Shortcuts': 'Pintasan',
+    'Update profile': 'Perbarui profil',
+    'Data sources': 'Sumber data',
+    'Logout': 'Keluar',
+    'Login': 'Masuk',
+    'Login to AGLI': 'Masuk ke AGLI',
+    'Back to landing': 'Kembali ke landing',
+    'Email': 'Email',
+    'Password': 'Kata sandi',
+    'Show password': 'Tampilkan kata sandi',
+    'Hide password': 'Sembunyikan kata sandi',
+    'Content intelligence for serious games that actually gets used.': 'Intelijen konten untuk serious game yang benar-benar dipakai.',
+    'Research what earns attention with HR and L&D audiences, find the repeatable pattern, then draft credible Pro Actief content for human review.': 'Riset konten yang menarik perhatian audiens HR dan L&D, temukan pola yang bisa diulang, lalu buat draft Pro Actief yang kredibel untuk ditinjau manusia.',
+    'Research what earns attention with HR and L&D audiences, find the repeatable pattern,\n            then draft credible Pro Actief content for human review.': 'Riset konten yang menarik perhatian audiens HR dan L&D, temukan pola yang bisa diulang, lalu buat draft Pro Actief yang kredibel untuk ditinjau manusia.',
+    'Use the demo account below, or edit the profile details after entering.': 'Gunakan akun demo di bawah, atau ubah detail profil setelah masuk.',
+    'Amsterdam Game Lab Intelligence': 'Amsterdam Game Lab Intelligence',
+    'A lightweight workspace for content research, pattern discovery, and draft creation.': 'Workspace ringan untuk riset konten, penemuan pola, dan pembuatan draft.',
+    'Verified metrics only. Import platform exports before publishing.': 'Hanya metrik terverifikasi. Impor ekspor platform sebelum publikasi.',
+    'ICP': 'ICP',
+    'Platform': 'Platform',
+    'Objective': 'Tujuan',
+    'Tone': 'Nada',
+    'All Platforms': 'Semua Platform',
+    'Awareness': 'Awareness',
+    'Discovery Call': 'Discovery Call',
+    'Thought Leadership': 'Thought Leadership',
+    'Workshop Demand': 'Permintaan Workshop',
+    'Professional & Warm': 'Profesional & Hangat',
+    'Practical': 'Praktis',
+    'Calm Expert': 'Ahli yang Tenang',
+    'Direct': 'Langsung',
+    'HR & L&D Professionals': 'Profesional HR & L&D',
+    'Team Leads': 'Team Lead',
+    'Managers': 'Manajer',
+    'People Ops': 'People Ops',
+    'Filters': 'Filter',
+    'Save search': 'Simpan pencarian',
+    'Top Performing Content': 'Konten Berkinerja Terbaik',
+    'by imported traction': 'berdasarkan traction impor',
+    'Import CSV': 'Impor CSV',
+    '#': '#',
+    'Title': 'Judul',
+    'Account': 'Akun',
+    'Type': 'Tipe',
+    'Traction Score': 'Skor Traction',
+    'Engagement': 'Engagement',
+    'Views': 'Tayangan',
+    'Published': 'Dipublikasikan',
+    'Confidence': 'Keyakinan',
+    'No research data imported': 'Belum ada data riset',
+    'Upload a CSV export from LinkedIn, YouTube Studio, VidIQ, TubeBuddy, TikTok Creative Center, Instagram insights, or manual research.': 'Unggah ekspor CSV dari LinkedIn, YouTube Studio, VidIQ, TubeBuddy, TikTok Creative Center, Instagram insights, atau riset manual.',
+    'Showing': 'Menampilkan',
+    'of': 'dari',
+    'imported rows': 'baris impor',
+    'Pattern Insights': 'Insight Pola',
+    'summary from imported content': 'ringkasan dari konten impor',
+    'No patterns yet': 'Belum ada pola',
+    'After import, AGLI will calculate hooks, topics, formats, lengths, and visual style patterns from the highest scoring rows.': 'Setelah impor, AGLI akan menghitung pola hook, topik, format, durasi, dan gaya visual dari baris dengan skor tertinggi.',
+    'Patterns are computed only from imported rows. Verify every source before publishing.': 'Pola hanya dihitung dari baris impor. Verifikasi setiap sumber sebelum publikasi.',
+    'Top Hooks': 'Hook Teratas',
+    'Top Topics': 'Topik Teratas',
+    'Top Formats': 'Format Teratas',
+    'Ideal Length': 'Durasi Ideal',
+    'Visual Style': 'Gaya Visual',
+    'View hook evidence': 'Lihat bukti hook',
+    'View topics': 'Lihat topik',
+    'View formats': 'Lihat format',
+    'View guidance': 'Lihat panduan',
+    'View examples': 'Lihat contoh',
+    'Draft Studio': 'Studio Draft',
+    'Generate draft': 'Buat draft',
+    'Post Copy': 'Copy Post',
+    'Hooks': 'Hook',
+    'Video Outline': 'Outline Video',
+    'Hashtags': 'Hashtag',
+    'Brand / Client': 'Brand / Klien',
+    'Content Pillar': 'Pilar Konten',
+    'Draft only - human review required.': 'Draft saja - perlu tinjauan manusia.',
+    'Import research data, generate a draft, or write manually here.': 'Impor data riset, buat draft, atau tulis manual di sini.',
+    'Word count': 'Jumlah kata',
+    'Characters': 'Karakter',
+    'Call to Action (optional)': 'Call to Action (opsional)',
+    'Add a grounded CTA after review.': 'Tambahkan CTA yang berdasar setelah ditinjau.',
+    'No fabricated claims.': 'Tidak ada klaim palsu.',
+    'Use imported proof only. Add real quotes or client claims only when supplied.': 'Gunakan bukti impor saja. Tambahkan kutipan nyata atau klaim klien hanya jika tersedia.',
+    'Save draft': 'Simpan draft',
+    'Add to Calendar': 'Tambahkan ke Kalender',
+    'Update photo': 'Perbarui foto',
+    'Name': 'Nama',
+    'Role': 'Peran',
+    'Timezone': 'Zona waktu',
+    'Operational controls for a manual-review content workflow.': 'Kontrol operasional untuk alur konten dengan review manual.',
+    'Language': 'Bahasa',
+    'Interface language': 'Bahasa antarmuka',
+    'Choose the dashboard language. Data titles and imported research stay unchanged.': 'Pilih bahasa dashboard. Judul data dan riset impor tetap tidak berubah.',
+    'Require verified metrics': 'Wajib metrik terverifikasi',
+    'Manual publishing only': 'Publikasi manual saja',
+    'Review before export': 'Review sebelum ekspor',
+    'Store workspace locally': 'Simpan workspace lokal',
+    'Export backup': 'Ekspor backup',
+    'Clear workspace': 'Bersihkan workspace',
+    'Update Profile': 'Perbarui Profil',
+    'Update the workspace identity shown in the app shell.': 'Perbarui identitas workspace yang tampil di aplikasi.',
+    'Manage research inputs and reproducible demo data.': 'Kelola input riset dan data demo yang reproducible.',
+    'Fast paths for the live demo and day-to-day content workflow.': 'Pintasan untuk demo langsung dan workflow konten harian.',
+    'Open Research': 'Buka Riset',
+    'Open Library': 'Buka Library',
+    'Open Reports': 'Buka Laporan',
+    'Reset demo data': 'Reset data demo',
+    'Export workspace': 'Ekspor workspace',
+    'Close': 'Tutup',
+    'No records yet': 'Belum ada catatan',
+    'Workspace records created from imports or user actions.': 'Catatan workspace dibuat dari impor atau aksi pengguna.',
+    'Import research data and generate a draft to fill this tab.': 'Impor data riset dan buat draft untuk mengisi tab ini.',
+    'Storage': 'Penyimpanan',
+    'Publishing': 'Publikasi',
+    'Backup': 'Backup',
+    'Local persistence on': 'Penyimpanan lokal aktif',
+    'Local persistence off': 'Penyimpanan lokal nonaktif',
+    'Manual publishing enforced': 'Publikasi manual diwajibkan',
+    'Manual publishing optional': 'Publikasi manual opsional',
+    'Portable project file': 'File proyek portabel',
+    'Download a JSON copy of all imported rows, patterns, drafts, and workspace records.': 'Unduh salinan JSON berisi semua baris impor, pola, draft, dan catatan workspace.',
+  },
+  nl: {
+    'Overview': 'Overzicht',
+    'Research': 'Onderzoek',
+    'Pattern Engine': 'Patroonmotor',
+    'Calendar': 'Kalender',
+    'Content Library': 'Bibliotheek',
+    'Reports': 'Rapporten',
+    'Saved Searches': 'Zoekopslag',
+    'Brand Voice': 'Merkstem',
+    'Team': 'Team',
+    'Settings': 'Instellingen',
+    'Profile': 'Profiel',
+    'Data Sources': 'Databronnen',
+    'Shortcuts': 'Snelkoppelingen',
+    'Update profile': 'Profiel bijwerken',
+    'Data sources': 'Databronnen',
+    'Logout': 'Uitloggen',
+    'Login': 'Inloggen',
+    'Login to AGLI': 'Inloggen bij AGLI',
+    'Back to landing': 'Terug naar landing',
+    'Email': 'E-mail',
+    'Password': 'Wachtwoord',
+    'Show password': 'Wachtwoord tonen',
+    'Hide password': 'Wachtwoord verbergen',
+    'Content intelligence for serious games that actually gets used.': 'Content intelligence voor serious games die echt gebruikt worden.',
+    'Research what earns attention with HR and L&D audiences, find the repeatable pattern, then draft credible Pro Actief content for human review.': 'Onderzoek wat aandacht krijgt bij HR- en L&D-doelgroepen, vind het herhaalbare patroon en maak geloofwaardige Pro Actief-concepten voor menselijke review.',
+    'Research what earns attention with HR and L&D audiences, find the repeatable pattern,\n            then draft credible Pro Actief content for human review.': 'Onderzoek wat aandacht krijgt bij HR- en L&D-doelgroepen, vind het herhaalbare patroon en maak geloofwaardige Pro Actief-concepten voor menselijke review.',
+    'Use the demo account below, or edit the profile details after entering.': 'Gebruik het demo-account hieronder, of pas de profielgegevens aan na het inloggen.',
+    'A lightweight workspace for content research, pattern discovery, and draft creation.': 'Een lichte workspace voor contentonderzoek, patroonontdekking en conceptcreatie.',
+    'Verified metrics only. Import platform exports before publishing.': 'Alleen geverifieerde metrics. Importeer platformexports voor publicatie.',
+    'ICP': 'ICP',
+    'Platform': 'Platform',
+    'Objective': 'Doel',
+    'Tone': 'Toon',
+    'All Platforms': 'Alle platforms',
+    'Awareness': 'Awareness',
+    'Discovery Call': 'Discovery call',
+    'Thought Leadership': 'Thought leadership',
+    'Workshop Demand': 'Workshopvraag',
+    'Professional & Warm': 'Professioneel & warm',
+    'Practical': 'Praktisch',
+    'Calm Expert': 'Rustige expert',
+    'Direct': 'Direct',
+    'HR & L&D Professionals': 'HR- & L&D-professionals',
+    'Team Leads': 'Teamleiders',
+    'Managers': 'Managers',
+    'People Ops': 'People Ops',
+    'Filters': 'Filters',
+    'Save search': 'Zoekopdracht opslaan',
+    'Top Performing Content': 'Best presterende content',
+    'by imported traction': 'op basis van geimporteerde tractie',
+    'Import CSV': 'CSV importeren',
+    'Title': 'Titel',
+    'Account': 'Account',
+    'Type': 'Type',
+    'Traction Score': 'Tractiescore',
+    'Engagement': 'Engagement',
+    'Views': 'Weergaven',
+    'Published': 'Gepubliceerd',
+    'Confidence': 'Betrouwbaarheid',
+    'No research data imported': 'Geen onderzoeksdata geimporteerd',
+    'Upload a CSV export from LinkedIn, YouTube Studio, VidIQ, TubeBuddy, TikTok Creative Center, Instagram insights, or manual research.': 'Upload een CSV-export van LinkedIn, YouTube Studio, VidIQ, TubeBuddy, TikTok Creative Center, Instagram Insights of handmatig onderzoek.',
+    'Showing': 'Toont',
+    'of': 'van',
+    'imported rows': 'geimporteerde rijen',
+    'Pattern Insights': 'Patrooninzichten',
+    'summary from imported content': 'samenvatting uit geimporteerde content',
+    'No patterns yet': 'Nog geen patronen',
+    'After import, AGLI will calculate hooks, topics, formats, lengths, and visual style patterns from the highest scoring rows.': 'Na import berekent AGLI hooks, onderwerpen, formats, lengte en visuele stijlen uit de best scorende rijen.',
+    'Patterns are computed only from imported rows. Verify every source before publishing.': 'Patronen worden alleen berekend uit geimporteerde rijen. Verifieer elke bron voor publicatie.',
+    'Top Hooks': 'Top hooks',
+    'Top Topics': 'Toponderwerpen',
+    'Top Formats': 'Topformats',
+    'Ideal Length': 'Ideale lengte',
+    'Visual Style': 'Visuele stijl',
+    'View hook evidence': 'Bekijk hookbewijs',
+    'View topics': 'Bekijk onderwerpen',
+    'View formats': 'Bekijk formats',
+    'View guidance': 'Bekijk richtlijn',
+    'View examples': 'Bekijk voorbeelden',
+    'Draft Studio': 'Conceptstudio',
+    'Generate draft': 'Concept maken',
+    'Post Copy': 'Posttekst',
+    'Hooks': 'Hooks',
+    'Video Outline': 'Video-outline',
+    'Hashtags': 'Hashtags',
+    'Brand / Client': 'Merk / Klant',
+    'Content Pillar': 'Contentpijler',
+    'Draft only - human review required.': 'Alleen concept - menselijke review vereist.',
+    'Import research data, generate a draft, or write manually here.': 'Importeer onderzoeksdata, genereer een concept of schrijf hier handmatig.',
+    'Word count': 'Aantal woorden',
+    'Characters': 'Tekens',
+    'Call to Action (optional)': 'Call-to-action (optioneel)',
+    'Add a grounded CTA after review.': 'Voeg na review een onderbouwde CTA toe.',
+    'No fabricated claims.': 'Geen verzonnen claims.',
+    'Use imported proof only. Add real quotes or client claims only when supplied.': 'Gebruik alleen geimporteerd bewijs. Voeg echte quotes of klantclaims alleen toe als ze zijn aangeleverd.',
+    'Save draft': 'Concept opslaan',
+    'Add to Calendar': 'Toevoegen aan kalender',
+    'Update photo': 'Foto bijwerken',
+    'Name': 'Naam',
+    'Role': 'Rol',
+    'Timezone': 'Tijdzone',
+    'Operational controls for a manual-review content workflow.': 'Operationele instellingen voor een contentworkflow met handmatige review.',
+    'Language': 'Taal',
+    'Interface language': 'Interfacetaal',
+    'Choose the dashboard language. Data titles and imported research stay unchanged.': 'Kies de taal van het dashboard. Datatitels en geimporteerd onderzoek blijven ongewijzigd.',
+    'Require verified metrics': 'Geverifieerde metrics verplicht',
+    'Manual publishing only': 'Alleen handmatig publiceren',
+    'Review before export': 'Review voor export',
+    'Store workspace locally': 'Workspace lokaal opslaan',
+    'Export backup': 'Backup exporteren',
+    'Clear workspace': 'Workspace wissen',
+    'Update Profile': 'Profiel bijwerken',
+    'Update the workspace identity shown in the app shell.': 'Werk de workspace-identiteit bij die in de app wordt getoond.',
+    'Manage research inputs and reproducible demo data.': 'Beheer onderzoeksinputs en reproduceerbare demodata.',
+    'Fast paths for the live demo and day-to-day content workflow.': 'Snelle routes voor de live demo en dagelijkse contentworkflow.',
+    'Open Research': 'Onderzoek openen',
+    'Open Library': 'Bibliotheek openen',
+    'Open Reports': 'Rapporten openen',
+    'Reset demo data': 'Demodata resetten',
+    'Export workspace': 'Workspace exporteren',
+    'Close': 'Sluiten',
+    'No records yet': 'Nog geen records',
+    'Workspace records created from imports or user actions.': 'Workspace-records gemaakt via imports of gebruikersacties.',
+    'Import research data and generate a draft to fill this tab.': 'Importeer onderzoeksdata en genereer een concept om dit tabblad te vullen.',
+    'Storage': 'Opslag',
+    'Publishing': 'Publicatie',
+    'Backup': 'Backup',
+    'Local persistence on': 'Lokale opslag aan',
+    'Local persistence off': 'Lokale opslag uit',
+    'Manual publishing enforced': 'Handmatig publiceren verplicht',
+    'Manual publishing optional': 'Handmatig publiceren optioneel',
+    'Portable project file': 'Draagbaar projectbestand',
+    'Download a JSON copy of all imported rows, patterns, drafts, and workspace records.': 'Download een JSON-kopie van alle geimporteerde rijen, patronen, concepten en workspace-records.',
+  },
+}
+
+const LanguageContext = createContext<Language>('en')
+
+function translate(text: string, language: Language) {
+  return translations[language][text] ?? text
+}
+
+function useT() {
+  const language = useContext(LanguageContext)
+  return (text: string) => translate(text, language)
+}
 
 const primaryNav: Array<{ icon: ReactNode; label: PageKey }> = [
   { icon: <Home size={18} />, label: 'Overview' },
@@ -158,9 +473,11 @@ const defaultSettings: AppSettings = {
   manualPublishingOnly: true,
   reviewBeforeExport: true,
   storeLocally: true,
+  language: 'en',
 }
 
 const defaultWorkspaceProfile: WorkspaceProfile = {
+  avatar: '',
   email: 'content@amsterdamgamelab.nl',
   name: 'AGLI workspace',
   role: 'Content strategist',
@@ -371,6 +688,7 @@ const demoTeamMembers: TeamMember[] = [
 ]
 
 function App() {
+  const [authView, setAuthView] = useStoredState<AuthView>('agli:authView', 'landing')
   const [activePage, setActivePage] = useState<PageKey>('Research')
   const [icp, setIcp] = useStoredState('agli:icp', icpOptions[0])
   const [platformFilter, setPlatformFilter] = useStoredState<PlatformFilter>(
@@ -384,7 +702,7 @@ function App() {
   const [draftText, setDraftText] = useStoredState('agli:draftText', '')
   const [draftOutput, setDraftOutput] = useStoredState<DraftOutput | null>('agli:draftOutput', null)
   const [cta, setCta] = useStoredState('agli:cta', '')
-  const [notice, setNotice] = useState('No fabricated claims')
+  const [, setNotice] = useState('No fabricated claims')
   const [contentItems, setContentItems] = useStoredState<ContentItem[]>('agli:contentItems', demoContentItems)
   const [calendarItems, setCalendarItems] = useStoredState<CalendarItem[]>('agli:calendarItems', demoCalendarItems)
   const [libraryItems, setLibraryItems] = useStoredState<LibraryItem[]>('agli:libraryItems', demoLibraryItems)
@@ -395,8 +713,8 @@ function App() {
   const [workspaceProfile, setWorkspaceProfile] = useStoredState<WorkspaceProfile>('agli:workspaceProfile', defaultWorkspaceProfile)
   const [selectedContentId, setSelectedContentId] = useState('')
   const [tablePage, setTablePage] = useState(1)
-  const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const [activePanel, setActivePanel] = useState<PanelKey | null>(null)
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false)
 
   const rankedContent = useMemo(() => rankContent(contentItems), [contentItems])
   const filteredRanked = useMemo(
@@ -408,6 +726,7 @@ function App() {
   )
   const summary = useMemo(() => calculatePatternSummary(filteredRanked), [filteredRanked])
   const wordCount = useMemo(() => draftText.trim().split(/\s+/).filter(Boolean).length, [draftText])
+  const language = settings.language ?? 'en'
   const topReference = useMemo(
     () => filteredRanked.find((item) => item.id === selectedContentId) ?? filteredRanked[0],
     [filteredRanked, selectedContentId],
@@ -426,12 +745,18 @@ function App() {
   })
 
   function action(message: string) {
-    setNotice(message)
+    if (message) setNotice(message)
   }
 
   function openPanel(panel: PanelKey) {
+    setProfileMenuOpen(false)
     setActivePanel(panel)
-    setNotice(`${panelLabel(panel)} ready`)
+  }
+
+  function openProfilePage(page: PageKey) {
+    setActivePage(page)
+    setActivePanel(null)
+    setProfileMenuOpen(false)
   }
 
   function loadDemoWorkspace() {
@@ -443,7 +768,19 @@ function App() {
     setBrandRules(defaultBrandRules)
     setSelectedContentId(demoContentItems[0]?.id ?? '')
     window.localStorage.setItem('agli:demoSeedVersion', 'interactive-v1')
-    action('Demo scenario loaded')
+    action('Demo scenario reset')
+  }
+
+  function enterApp() {
+    setAuthView('app')
+    loadDemoWorkspace()
+  }
+
+  function logout() {
+    setAuthView('landing')
+    setActivePage('Research')
+    setActivePanel(null)
+    setProfileMenuOpen(false)
   }
 
   function handleCsvUpload(event: ChangeEvent<HTMLInputElement>) {
@@ -529,16 +866,6 @@ function App() {
     }
     setLibraryItems((current) => [item, ...current])
     action('Draft saved to Content Library')
-  }
-
-  async function copyDraft() {
-    if (!draftText.trim()) {
-      action('Draft is empty')
-      return
-    }
-
-    await navigator.clipboard.writeText(`${draftText}\n\n${cta}`)
-    action('Draft copied')
   }
 
   function addDraftToCalendar() {
@@ -628,12 +955,27 @@ function App() {
     action('Workspace cleared')
   }
 
+  if (authView !== 'app') {
+    return (
+      <LanguageContext.Provider value={language}>
+        <AuthScreen
+          mode={authView}
+          onEnter={enterApp}
+          onModeChange={setAuthView}
+          profile={workspaceProfile}
+          setProfile={setWorkspaceProfile}
+        />
+      </LanguageContext.Provider>
+    )
+  }
+
   return (
+    <LanguageContext.Provider value={language}>
     <div className="prototype-shell">
       <aside className="sidebar">
         <div className="brand-block">
+          <img alt="AGLI robot mark" src="/assets/agli-logo.jpeg" />
           <strong>AGLI</strong>
-          <span>Amsterdam Game Lab Intelligence</span>
         </div>
 
         <nav className="nav-list" aria-label="Main navigation">
@@ -645,8 +987,8 @@ function App() {
               label={item.label}
               onClick={() => {
                 setActivePage(item.label)
+                setActivePanel(null)
                 setProfileMenuOpen(false)
-                action(`${item.label} opened`)
               }}
             />
           ))}
@@ -663,86 +1005,21 @@ function App() {
               label={item.label}
               onClick={() => {
                 setActivePage(item.label)
+                setActivePanel(null)
                 setProfileMenuOpen(false)
-                action(`${item.label} opened`)
               }}
             />
           ))}
         </nav>
 
-        <div className="sidebar-user-wrap">
-          {profileMenuOpen ? (
-            <div className="profile-menu">
-              <button
-                onClick={() => {
-                  openPanel('profile')
-                  setProfileMenuOpen(false)
-                }}
-                type="button"
-              >
-                Update profile
-              </button>
-              <button
-                onClick={() => {
-                  openPanel('sources')
-                  setProfileMenuOpen(false)
-                }}
-                type="button"
-              >
-                Data sources
-              </button>
-              <button
-                onClick={() => {
-                  openPanel('shortcuts')
-                  setProfileMenuOpen(false)
-                }}
-                type="button"
-              >
-                Shortcuts
-              </button>
-              <button
-                onClick={() => {
-                  loadDemoWorkspace()
-                  setProfileMenuOpen(false)
-                }}
-                type="button"
-              >
-                Load demo scenario
-              </button>
-              <button
-                onClick={() => {
-                  exportAnalysis()
-                  setProfileMenuOpen(false)
-                }}
-                type="button"
-              >
-                Export backup
-              </button>
-            </div>
-          ) : null}
-          <button
-            aria-expanded={profileMenuOpen}
-            className="sidebar-user"
-            onClick={() => setProfileMenuOpen((open) => !open)}
-            type="button"
-          >
-            <span>AG</span>
-            <div>
-              <strong>{workspaceProfile.name}</strong>
-              <small>{contentItems.length} research rows</small>
-            </div>
-            <ChevronDown size={17} />
-          </button>
-        </div>
       </aside>
 
       <main className="research-page">
         <header className="research-topbar">
-          <h1>{activePage}</h1>
+          <h1>{translate(activePage, language)}</h1>
           <div className="status-strip">
             <ShieldCheck size={21} />
-            <span>Verified metrics only. Import platform exports before publishing.</span>
-            <strong>{notice}</strong>
+            <span>{translate('Verified metrics only. Import platform exports before publishing.', language)}</span>
             <i />
             <button aria-label="Help" onClick={() => openPanel('help')} type="button">
               <CircleHelp size={21} />
@@ -750,6 +1027,13 @@ function App() {
             <button aria-label="Notifications" onClick={() => openPanel('notifications')} type="button">
               <Bell size={21} />
             </button>
+            <ProfileMenu
+              logout={logout}
+              open={profileMenuOpen}
+              openPage={openProfilePage}
+              profile={workspaceProfile}
+              setOpen={setProfileMenuOpen}
+            />
           </div>
         </header>
 
@@ -757,7 +1041,6 @@ function App() {
           <ResearchPage
             action={action}
             addDraftToCalendar={addDraftToCalendar}
-            copyDraft={copyDraft}
             contentPillar={contentPillar}
             cta={cta}
             dateLabel={dateRangeLabel(filteredRanked)}
@@ -815,9 +1098,12 @@ function App() {
             setSavedSearches={setSavedSearches}
             setSettings={setSettings}
             setTeamMembers={setTeamMembers}
+            setWorkspaceProfile={setWorkspaceProfile}
             settings={settings}
             summary={summary}
             teamMembers={teamMembers}
+            workspaceProfile={workspaceProfile}
+            loadDemoWorkspace={loadDemoWorkspace}
           />
         )}
         {activePanel ? (
@@ -826,21 +1112,191 @@ function App() {
             brandRules={brandRules}
             close={() => setActivePanel(null)}
             contentItems={contentItems}
-            exportAnalysis={exportAnalysis}
             filteredRanked={filteredRanked}
             icp={icp}
-            loadDemoWorkspace={loadDemoWorkspace}
             objective={objective}
             platformFilter={platformFilter}
             savedSearches={savedSearches}
-            setWorkspaceProfile={setWorkspaceProfile}
+            setActivePage={setActivePage}
             summary={summary}
             tone={tone}
             workspaceProfile={workspaceProfile}
+            setWorkspaceProfile={setWorkspaceProfile}
+            onImportCsv={handleCsvUpload}
+            loadDemoWorkspace={loadDemoWorkspace}
+            exportAnalysis={exportAnalysis}
+            logout={logout}
           />
         ) : null}
       </main>
     </div>
+    </LanguageContext.Provider>
+  )
+}
+
+function ProfileMenu({
+  logout,
+  open,
+  openPage,
+  profile,
+  setOpen,
+}: {
+  logout: () => void
+  open: boolean
+  openPage: (page: PageKey) => void
+  profile: WorkspaceProfile
+  setOpen: (updater: (current: boolean) => boolean) => void
+}) {
+  const t = useT()
+
+  function openProfilePage(page: PageKey) {
+    setOpen(() => false)
+    openPage(page)
+  }
+
+  return (
+    <div className="topbar-user-wrap">
+      {open ? (
+        <div className="profile-menu topbar-profile-menu">
+          <button onClick={() => openProfilePage('Profile')} type="button">
+            <User size={16} />
+            {t('Update profile')}
+          </button>
+          <button onClick={() => openProfilePage('Data Sources')} type="button">
+            <Database size={16} />
+            {t('Data sources')}
+          </button>
+          <button onClick={() => openProfilePage('Shortcuts')} type="button">
+            <Keyboard size={16} />
+            {t('Shortcuts')}
+          </button>
+          <button onClick={logout} type="button">
+            <LogOut size={16} />
+            {t('Logout')}
+          </button>
+        </div>
+      ) : null}
+      <button
+        aria-expanded={open}
+        className={`topbar-user ${open ? 'open' : ''}`}
+        onClick={() => {
+          setOpen((current) => !current)
+        }}
+        type="button"
+      >
+        <span>
+          {profile.avatar ? <img alt="" src={profile.avatar} /> : 'AG'}
+        </span>
+        <div>
+          <strong>{profile.name}</strong>
+          <small>{profile.role}</small>
+        </div>
+        <ChevronDown size={16} />
+      </button>
+    </div>
+  )
+}
+
+function AuthScreen({
+  mode,
+  onEnter,
+  onModeChange,
+  profile,
+  setProfile,
+}: {
+  mode: AuthView
+  onEnter: () => void
+  onModeChange: (value: AuthView) => void
+  profile: WorkspaceProfile
+  setProfile: (updater: (current: WorkspaceProfile) => WorkspaceProfile) => void
+}) {
+  const isLogin = mode === 'login'
+  const [showPassword, setShowPassword] = useState(false)
+  const t = useT()
+
+  return (
+    <main className="auth-shell">
+      <section className="auth-hero">
+        <img alt="" className="auth-bg" src="/assets/agl-workshop.png" />
+        <div className="auth-overlay" />
+        <div className="auth-hero-content">
+        <div className="auth-brand-lockup">
+            <img alt="AGLI robot mark" className="auth-logo" src="/assets/agli-logo.jpeg" />
+            <strong>AGLI</strong>
+          </div>
+          <h1>{t('Content intelligence for serious games that actually gets used.')}</h1>
+          <p>{t('Research what earns attention with HR and L&D audiences, find the repeatable pattern, then draft credible Pro Actief content for human review.')}</p>
+          <div className="auth-stat-row">
+            <span>{t('Research')}</span>
+            <span>{t('Pattern Engine')}</span>
+            <span>{t('Draft Studio')}</span>
+          </div>
+        </div>
+      </section>
+
+      <section className="auth-panel">
+        {isLogin ? (
+          <div className="auth-panel-title-row">
+            <div className="auth-panel-lockup">
+              <img alt="AGLI robot mark" className="auth-panel-logo" src="/assets/agli-logo.jpeg" />
+            </div>
+            <h2>{t('Login to AGLI')}</h2>
+          </div>
+        ) : (
+          <>
+            <div className="auth-panel-lockup">
+              <img alt="AGLI robot mark" className="auth-panel-logo" src="/assets/agli-logo.jpeg" />
+              <strong>AGLI</strong>
+            </div>
+            <h2>{t('Amsterdam Game Lab Intelligence')}</h2>
+          </>
+        )}
+        <p>
+          {isLogin
+            ? t('Use the demo account below, or edit the profile details after entering.')
+            : t('A lightweight workspace for content research, pattern discovery, and draft creation.')}
+        </p>
+
+        {isLogin ? (
+          <div className="panel-form">
+            <label>
+              {t('Email')}
+              <input
+                value={profile.email}
+                onChange={(event) =>
+                  setProfile((current) => ({ ...current, email: event.target.value }))
+                }
+              />
+            </label>
+            <label>
+              {t('Password')}
+              <span className="password-field">
+                <input type={showPassword ? 'text' : 'password'} value="agli-demo" readOnly />
+                <button
+                  aria-label={showPassword ? t('Hide password') : t('Show password')}
+                  onClick={() => setShowPassword((current) => !current)}
+                  type="button"
+                >
+                  {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                </button>
+              </span>
+            </label>
+            <button className="save-button auth-primary" onClick={onEnter} type="button">
+              {t('Login')}
+            </button>
+            <button className="secondary-action auth-secondary" onClick={() => onModeChange('landing')} type="button">
+              {t('Back to landing')}
+            </button>
+          </div>
+        ) : (
+          <div className="auth-actions">
+            <button className="save-button auth-primary" onClick={() => onModeChange('login')} type="button">
+              {t('Login')}
+            </button>
+          </div>
+        )}
+      </section>
+    </main>
   )
 }
 
@@ -848,7 +1304,6 @@ function ResearchPage({
   action,
   addDraftToCalendar,
   contentPillar,
-  copyDraft,
   cta,
   dateLabel,
   draftOutput,
@@ -883,7 +1338,6 @@ function ResearchPage({
   action: (message: string) => void
   addDraftToCalendar: () => void
   contentPillar: string
-  copyDraft: () => Promise<void>
   cta: string
   dateLabel: string
   draftOutput: DraftOutput | null
@@ -915,6 +1369,7 @@ function ResearchPage({
   tone: string
   wordCount: number
 }) {
+  const t = useT()
   const pageSize = 8
   const totalPages = Math.max(1, Math.ceil(filteredRanked.length / pageSize))
   const safePage = Math.min(page, totalPages)
@@ -933,12 +1388,12 @@ function ResearchPage({
           {dateLabel}
         </button>
         <button className="filter-button" onClick={() => openPanel('filters')} type="button">
-          <Search size={17} />
-          Filters
+          <Filter size={17} />
+          {t('Filters')}
         </button>
         <button className="save-button" onClick={saveSearch} type="button">
           <Bookmark size={17} />
-          Save search
+          {t('Save search')}
         </button>
       </section>
 
@@ -947,13 +1402,13 @@ function ResearchPage({
           <section className="content-panel">
             <div className="panel-title">
               <div>
-                <h2>Top Performing Content</h2>
-                <span>(by imported traction)</span>
+                <h2>{t('Top Performing Content')}</h2>
+                <span>({t('by imported traction')})</span>
                 <Info size={16} />
               </div>
               <label className="compact-action import-action">
                 <Upload size={15} />
-                Import CSV
+                {t('Import CSV')}
                 <input accept=".csv,text/csv" onChange={onImportCsv} type="file" />
               </label>
             </div>
@@ -962,16 +1417,16 @@ function ResearchPage({
               <table className="prototype-table">
                 <thead>
                   <tr>
-                    <th>#</th>
-                    <th>Title</th>
-                    <th>Platform</th>
-                    <th>Account</th>
-                    <th>Type</th>
-                    <th>Traction Score</th>
-                    <th>Engagement</th>
-                    <th>Views</th>
-                    <th>Published</th>
-                    <th>Confidence</th>
+                    <th>{t('#')}</th>
+                    <th>{t('Title')}</th>
+                    <th>{t('Platform')}</th>
+                    <th>{t('Account')}</th>
+                    <th>{t('Type')}</th>
+                    <th>{t('Traction Score')}</th>
+                    <th>{t('Engagement')}</th>
+                    <th>{t('Views')}</th>
+                    <th>{t('Published')}</th>
+                    <th>{t('Confidence')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1017,8 +1472,8 @@ function ResearchPage({
 
             <div className="table-footer">
               <span>
-                Showing {pageRows.length === 0 ? 0 : (safePage - 1) * pageSize + 1}-
-                {Math.min(safePage * pageSize, filteredRanked.length)} of {filteredRanked.length} imported rows
+                {t('Showing')} {pageRows.length === 0 ? 0 : (safePage - 1) * pageSize + 1}-
+                {Math.min(safePage * pageSize, filteredRanked.length)} {t('of')} {filteredRanked.length} {t('imported rows')}
               </span>
               <div className="pagination">
                 <button
@@ -1053,8 +1508,8 @@ function ResearchPage({
 
           <section className="insights-panel">
             <div className="insights-title">
-              <h2>Pattern Insights</h2>
-              <span>(summary from imported content)</span>
+              <h2>{t('Pattern Insights')}</h2>
+              <span>({t('summary from imported content')})</span>
               <Info size={16} />
             </div>
 
@@ -1086,41 +1541,40 @@ function ResearchPage({
 
             <div className="insight-disclaimer">
               <Info size={17} />
-              <span>Patterns are computed only from imported rows. Verify every source before publishing.</span>
+              <span>{t('Patterns are computed only from imported rows. Verify every source before publishing.')}</span>
             </div>
           </section>
         </div>
 
         <aside className="draft-card">
           <div className="draft-header">
-            <h2>Draft Studio</h2>
+            <h2>{t('Draft Studio')}</h2>
             <button className="generate-button" onClick={generateDraft} type="button">
               <Sparkles size={16} />
-              Generate draft
+              {t('Generate draft')}
             </button>
           </div>
 
-          <div className="draft-scroll">
-            <div className="draft-tabs">
-              {draftTabs.map((tab) => (
-                <button
-                  className={draftTab === tab ? 'active' : ''}
-                  key={tab}
-                  onClick={() => {
-                    setDraftTab(tab)
-                    action(`${tab} tab opened`)
-                  }}
-                  type="button"
-                >
-                  {tab}
-                </button>
-              ))}
-            </div>
+          <div className="draft-tabs">
+            {draftTabs.map((tab) => (
+              <button
+                className={draftTab === tab ? 'active' : ''}
+                key={tab}
+                onClick={() => {
+                  setDraftTab(tab)
+                }}
+                type="button"
+              >
+                {t(tab)}
+              </button>
+            ))}
+          </div>
 
+          <div className="draft-scroll">
             <div className="draft-form-grid">
-              <SelectBox label="Brand / Client" onSelect={() => action('Pro Actief selected')} options={['Pro Actief', 'Amsterdam Game Lab']} value="Pro Actief" />
+                <SelectBox label="Brand / Client" onSelect={() => action('Pro Actief selected')} options={['Pro Actief', 'Amsterdam Game Lab']} value="Pro Actief" />
               <SelectBox label="Content Pillar" onSelect={() => action('Pillar comes from imported patterns')} options={[contentPillar, 'Stress prevention', 'Team reflection', 'Leadership']} value={contentPillar} />
-              <SelectBox icon={<span className="mini-linkedin">{platformLabel(draftPlatform)}</span>} label="Platform" onSelect={(value) => setDraftPlatform(value as Platform)} options={platforms} value={draftPlatform} />
+              <SelectBox icon={<PlatformBadge platform={draftPlatform} />} label="Platform" onSelect={(value) => setDraftPlatform(value as Platform)} options={platforms} value={draftPlatform} />
               <SelectBox label="Objective" onSelect={setObjective} options={objectiveOptions} value={objective} />
             </div>
 
@@ -1128,17 +1582,17 @@ function ResearchPage({
               <>
                 <label className="draft-field">
                   <span>
-                    Post Copy <em>Draft only - human review required.</em>
+                    {t('Post Copy')} <em>{t('Draft only - human review required.')}</em>
                   </span>
                   <textarea
-                    placeholder="Import research data, generate a draft, or write manually here."
+                    placeholder={t('Import research data, generate a draft, or write manually here.')}
                     value={draftText}
                     onChange={(event) => setDraftText(event.target.value)}
                   />
                 </label>
                 <div className="copy-meta">
-                  <span>Word count: {wordCount}</span>
-                  <span>Characters: {draftText.length}</span>
+                  <span>{t('Word count')}: {wordCount}</span>
+                  <span>{t('Characters')}: {draftText.length}</span>
                 </div>
               </>
             ) : (
@@ -1151,10 +1605,10 @@ function ResearchPage({
             )}
 
             <label className="draft-field cta-field">
-              <span>Call to Action (optional)</span>
+              <span>{t('Call to Action (optional)')}</span>
               <input
                 maxLength={100}
-                placeholder="Add a grounded CTA after review."
+                placeholder={t('Add a grounded CTA after review.')}
                 value={cta}
                 onChange={(event) => setCta(event.target.value)}
               />
@@ -1164,22 +1618,19 @@ function ResearchPage({
             <div className="warning-box">
               <Info size={22} />
               <div>
-                <strong>No fabricated claims.</strong>
-                <span>Use imported proof only. Add real quotes or client claims only when supplied.</span>
+                <strong>{t('No fabricated claims.')}</strong>
+                <span>{t('Use imported proof only. Add real quotes or client claims only when supplied.')}</span>
               </div>
             </div>
 
             <div className="draft-actions">
               <button className="secondary-action" onClick={saveDraft} type="button">
                 <FileText size={16} />
-                Save draft
+                {t('Save draft')}
               </button>
               <button className="calendar-action" onClick={addDraftToCalendar} type="button">
                 <CalendarDays size={17} />
-                Add to Calendar
-              </button>
-              <button className="calendar-caret" onClick={copyDraft} type="button" title="Copy draft">
-                <Copy size={17} />
+                {t('Add to Calendar')}
               </button>
             </div>
           </div>
@@ -1200,6 +1651,7 @@ function DraftTabContent({
   summary: PatternSummary
   tab: Exclude<DraftTab, 'Post Copy'>
 }) {
+  const t = useT()
   const content = useMemo(() => {
     if (tab === 'Hooks') {
       return draftOutput?.hooks.length
@@ -1219,7 +1671,7 @@ function DraftTabContent({
   if (content.length === 0) {
     return (
       <div className="draft-tab-content">
-        <p>Import research data and generate a draft to fill this tab.</p>
+        <p>{t('Import research data and generate a draft to fill this tab.')}</p>
       </div>
     )
   }
@@ -1242,9 +1694,12 @@ function UtilityPanel({
   filteredRanked,
   icp,
   loadDemoWorkspace,
+  logout,
   objective,
+  onImportCsv,
   platformFilter,
   savedSearches,
+  setActivePage,
   setWorkspaceProfile,
   summary,
   tone,
@@ -1258,73 +1713,36 @@ function UtilityPanel({
   filteredRanked: RankedContent[]
   icp: string
   loadDemoWorkspace: () => void
+  logout: () => void
   objective: string
+  onImportCsv: (event: ChangeEvent<HTMLInputElement>) => void
   platformFilter: PlatformFilter
   savedSearches: SavedSearch[]
+  setActivePage: (page: PageKey) => void
   setWorkspaceProfile: (updater: (current: WorkspaceProfile) => WorkspaceProfile) => void
   summary: PatternSummary
   tone: string
   workspaceProfile: WorkspaceProfile
 }) {
-  const topRows = filteredRanked.slice(0, 4)
+  const t = useT()
   const panelTitle = panelLabel(activePanel)
+  function openPage(page: PageKey) {
+    setActivePage(page)
+    close()
+  }
 
   return (
-    <div className="utility-panel-shell" role="dialog" aria-label={panelTitle}>
+    <div className="utility-panel-shell" role="dialog" aria-label={t(panelTitle)}>
       <div className="utility-panel">
         <div className="utility-panel-head">
           <div>
             <span>AGLI workspace</span>
-            <h2>{panelTitle}</h2>
+            <h2>{t(panelTitle)}</h2>
           </div>
           <button aria-label="Close panel" onClick={close} type="button">
             <X size={18} />
           </button>
         </div>
-
-        {activePanel === 'profile' ? (
-          <div className="panel-form">
-            <label>
-              Name
-              <input
-                value={workspaceProfile.name}
-                onChange={(event) =>
-                  setWorkspaceProfile((current) => ({ ...current, name: event.target.value }))
-                }
-              />
-            </label>
-            <label>
-              Role
-              <input
-                value={workspaceProfile.role}
-                onChange={(event) =>
-                  setWorkspaceProfile((current) => ({ ...current, role: event.target.value }))
-                }
-              />
-            </label>
-            <label>
-              Email
-              <input
-                value={workspaceProfile.email}
-                onChange={(event) =>
-                  setWorkspaceProfile((current) => ({ ...current, email: event.target.value }))
-                }
-              />
-            </label>
-            <label>
-              Timezone
-              <input
-                value={workspaceProfile.timezone}
-                onChange={(event) =>
-                  setWorkspaceProfile((current) => ({ ...current, timezone: event.target.value }))
-                }
-              />
-            </label>
-            <button className="compact-action" onClick={close} type="button">
-              Save profile
-            </button>
-          </div>
-        ) : null}
 
         {activePanel === 'help' ? (
           <div className="panel-list">
@@ -1332,7 +1750,7 @@ function UtilityPanel({
               ['1. Pick a scenario', 'Use ICP, platform, objective, and tone dropdowns to reshape ranking and draft output.'],
               ['2. Select a winning row', 'Click a row in Research to make it the primary reference for Draft Studio.'],
               ['3. Generate and review', 'Draft Studio writes a human-review draft, then Calendar and Library store the next steps.'],
-              ['4. Export honestly', 'Export analysis includes rows, pattern summary, draft, and guardrails for the deck.'],
+              ['4. Review honestly', 'Use Data Sources or Reports to export the evidence pack for the deck.'],
             ].map(([title, text]) => (
               <PanelItem key={title} text={text} title={title} />
             ))}
@@ -1344,6 +1762,61 @@ function UtilityPanel({
             <PanelItem text={`${contentItems.length} scenario rows are available for ranking.`} title="Research data ready" />
             <PanelItem text={`${savedSearches.length} saved discovery flows can be reused.`} title="Saved searches" />
             <PanelItem text={`${brandRules.length} brand rules are active before publishing.`} title="Brand guardrails" />
+          </div>
+        ) : null}
+
+        {activePanel === 'profile' ? (
+          <div className="profile-panel">
+            <div className="profile-panel-head">
+              <span>
+                {workspaceProfile.avatar ? <img alt="" src={workspaceProfile.avatar} /> : 'AG'}
+              </span>
+              <div>
+                <strong>{workspaceProfile.name}</strong>
+                <p>{workspaceProfile.role}</p>
+                <em>{workspaceProfile.email}</em>
+              </div>
+            </div>
+            <ProfileEditor profile={workspaceProfile} setProfile={setWorkspaceProfile} />
+          </div>
+        ) : null}
+
+        {activePanel === 'dataSources' ? (
+          <div className="panel-list">
+            <PanelItem text={`${contentItems.length} active research rows are available for ranking and draft generation.`} title="Active data" />
+            <PanelItem text="CSV imports can come from LinkedIn, YouTube Studio, VidIQ, TubeBuddy, TikTok Creative Center, Instagram insights, or manual research." title="Accepted sources" />
+            <ImportCsvButton onChange={onImportCsv} />
+            <button className="profile-panel-action" onClick={loadDemoWorkspace} type="button">
+              <Database size={16} />
+              Reset demo scenario
+            </button>
+            <button className="profile-panel-action" onClick={exportAnalysis} type="button">
+              <FileText size={16} />
+              Export backup
+            </button>
+          </div>
+        ) : null}
+
+        {activePanel === 'shortcuts' ? (
+          <div className="panel-list">
+            <PanelItem text="Research -> select a row -> Generate draft -> Save draft -> Add to Calendar." title="Demo flow" />
+            <PanelItem text="Use Pattern Engine and Reports after importing rows to show the evidence pack behind drafts." title="Evidence flow" />
+            <button className="profile-panel-action" onClick={() => openPage('Research')} type="button">
+              <Search size={16} />
+              Open Research
+            </button>
+            <button className="profile-panel-action" onClick={() => openPage('Content Library')} type="button">
+              <Folder size={16} />
+              Open Content Library
+            </button>
+            <button className="profile-panel-action" onClick={() => openPage('Reports')} type="button">
+              <LineChart size={16} />
+              Open Reports
+            </button>
+            <button className="profile-panel-action" onClick={logout} type="button">
+              <LogOut size={16} />
+              Logout
+            </button>
           </div>
         ) : null}
 
@@ -1364,24 +1837,6 @@ function UtilityPanel({
           </div>
         ) : null}
 
-        {activePanel === 'sources' ? (
-          <div className="panel-list">
-            <PanelItem text="CSV import, manual research, VidIQ, TubeBuddy, TikTok Creative Center, YouTube Studio, LinkedIn analytics, and Instagram insights." title="Supported sources" />
-            <PanelItem text={`${contentItems.length} rows currently loaded. Replace scenario rows with verified exports before final publishing.`} title="Loaded rows" />
-            <button className="compact-action" onClick={loadDemoWorkspace} type="button">
-              Reload demo scenario
-            </button>
-          </div>
-        ) : null}
-
-        {activePanel === 'shortcuts' ? (
-          <div className="panel-list">
-            <PanelItem text="Research -> select row -> Generate draft -> Save draft -> Add to Calendar." title="Fast demo flow" />
-            <PanelItem text="Platform dropdown changes the ranked table and the strongest patterns." title="Scenario switch" />
-            <PanelItem text="Reports and Pattern Engine update from the same filtered research rows." title="Integrated pages" />
-          </div>
-        ) : null}
-
         {activePanel === 'patterns' ? (
           <div className="panel-list">
             <PanelItem text={`${summary.sampleSize} rows in active pattern sample.`} title="Sample size" />
@@ -1391,25 +1846,9 @@ function UtilityPanel({
           </div>
         ) : null}
 
-        {topRows.length > 0 ? (
-          <div className="panel-mini-table">
-            <strong>Top scenario rows</strong>
-            {topRows.map((row) => (
-              <div key={row.id}>
-                <span>{row.platform}</span>
-                <p>{row.title}</p>
-                <em>{row.score}</em>
-              </div>
-            ))}
-          </div>
-        ) : null}
-
         <div className="utility-panel-actions">
           <button className="secondary-action" onClick={close} type="button">
-            Close
-          </button>
-          <button className="calendar-action standalone" onClick={exportAnalysis} type="button">
-            Export analysis
+            {t('Close')}
           </button>
         </div>
       </div>
@@ -1418,10 +1857,11 @@ function UtilityPanel({
 }
 
 function PanelItem({ text, title }: { text: string; title: string }) {
+  const t = useT()
   return (
     <section className="panel-item">
-      <strong>{title}</strong>
-      <p>{text}</p>
+      <strong>{t(title)}</strong>
+      <p>{t(text)}</p>
     </section>
   )
 }
@@ -1440,6 +1880,7 @@ function SidebarPage({
   exportAnalysis,
   filteredRanked,
   libraryItems,
+  loadDemoWorkspace,
   onImportCsv,
   savedSearches,
   saveSearch,
@@ -1450,9 +1891,11 @@ function SidebarPage({
   setSavedSearches,
   setSettings,
   setTeamMembers,
+  setWorkspaceProfile,
   settings,
   summary,
   teamMembers,
+  workspaceProfile,
 }: {
   action: (message: string) => void
   activePage: PageKey
@@ -1467,6 +1910,7 @@ function SidebarPage({
   exportAnalysis: () => void
   filteredRanked: RankedContent[]
   libraryItems: LibraryItem[]
+  loadDemoWorkspace: () => void
   onImportCsv: (event: ChangeEvent<HTMLInputElement>) => void
   savedSearches: SavedSearch[]
   saveSearch: () => void
@@ -1477,10 +1921,91 @@ function SidebarPage({
   setSavedSearches: (updater: (current: SavedSearch[]) => SavedSearch[]) => void
   setSettings: (updater: (current: AppSettings) => AppSettings) => void
   setTeamMembers: (updater: (current: TeamMember[]) => TeamMember[]) => void
+  setWorkspaceProfile: (updater: (current: WorkspaceProfile) => WorkspaceProfile) => void
   settings: AppSettings
   summary: PatternSummary
   teamMembers: TeamMember[]
+  workspaceProfile: WorkspaceProfile
 }) {
+  const t = useT()
+
+  if (activePage === 'Profile') {
+    return (
+      <div className="subpage">
+        <PageCard subtitle="Update the workspace identity shown in the app shell." title="Update Profile">
+          <ProfileEditor profile={workspaceProfile} setProfile={setWorkspaceProfile} />
+        </PageCard>
+      </div>
+    )
+  }
+
+  if (activePage === 'Data Sources') {
+    return (
+      <div className="subpage">
+        <PageCard subtitle="Manage research inputs and reproducible demo data." title="Data Sources">
+          <WorkflowGrid
+            cards={[
+              {
+                eyebrow: 'CSV',
+                text: 'Import verified exports from LinkedIn, YouTube Studio, VidIQ, TubeBuddy, TikTok Creative Center, Instagram insights, or manual research.',
+                title: `${contentItems.length} active research rows`,
+              },
+              {
+                eyebrow: 'Demo',
+                text: 'Reset the integrated scenario rows when you need to show a clean hackathon walkthrough.',
+                title: 'Scenario reset',
+                actionLabel: 'Reset demo data',
+                onAction: loadDemoWorkspace,
+              },
+              {
+                eyebrow: 'Backup',
+                text: 'Download the current workspace, including rows, drafts, settings, and guardrails.',
+                title: 'Export workspace',
+                actionLabel: 'Export backup',
+                onAction: exportAnalysis,
+              },
+            ]}
+          />
+          <ActionRow actions={[{ label: 'Export backup', onClick: exportAnalysis }]} extra={<ImportCsvButton onChange={onImportCsv} />} />
+        </PageCard>
+      </div>
+    )
+  }
+
+  if (activePage === 'Shortcuts') {
+    return (
+      <div className="subpage">
+        <PageCard subtitle="Fast paths for the live demo and day-to-day content workflow." title="Shortcuts">
+          <WorkflowGrid
+            cards={[
+              {
+                eyebrow: 'Demo flow',
+                text: 'Research -> select a row -> Generate draft -> Save draft -> Add to Calendar.',
+                title: 'End-to-end content run',
+                actionLabel: 'Open Research',
+                onAction: () => setActivePage('Research'),
+              },
+              {
+                eyebrow: 'Review flow',
+                text: 'Drafts saved from Draft Studio appear in Content Library and can be scheduled manually.',
+                title: 'Human review loop',
+                actionLabel: 'Open Library',
+                onAction: () => setActivePage('Content Library'),
+              },
+              {
+                eyebrow: 'Reporting flow',
+                text: 'Reports and Pattern Engine both update from the same filtered ranked rows.',
+                title: 'Evidence pack',
+                actionLabel: 'Open Reports',
+                onAction: () => setActivePage('Reports'),
+              },
+            ]}
+          />
+        </PageCard>
+      </div>
+    )
+  }
+
   if (activePage === 'Overview') {
     return (
       <div className="subpage">
@@ -1521,7 +2046,6 @@ function SidebarPage({
           <ActionRow
             actions={[
               { label: 'Open research', onClick: () => setActivePage('Research') },
-              { label: 'Export analysis', onClick: exportAnalysis },
             ]}
             extra={<ImportCsvButton onChange={onImportCsv} />}
           />
@@ -1603,7 +2127,6 @@ function SidebarPage({
         title="Publishing Calendar"
         toolbar={[
           { label: 'Add draft', onClick: addDraftToCalendar },
-          { label: 'Export analysis', onClick: exportAnalysis },
         ]}
       >
         <WorkflowGrid
@@ -1877,6 +2400,23 @@ function SidebarPage({
             },
           ]}
         />
+        <div className="language-setting">
+          <SelectBox
+            label="Language"
+            onSelect={(label) => {
+              const selected = languageOptions.find((item) => item.label === label)
+              if (selected) {
+                setSettings((current) => ({ ...current, language: selected.value }))
+              }
+            }}
+            options={languageOptions.map((item) => item.label)}
+            value={languageOptions.find((item) => item.value === (settings.language ?? 'en'))?.label ?? 'English'}
+          />
+          <div>
+            <strong>{t('Interface language')}</strong>
+            <p>{t('Choose the dashboard language. Data titles and imported research stay unchanged.')}</p>
+          </div>
+        </div>
         <div className="settings-grid">
           <SettingToggle
             active={settings.requireVerifiedMetrics}
@@ -1931,12 +2471,69 @@ function SidebarPage({
 }
 
 function PageCard({ children, subtitle, title }: { children: ReactNode; subtitle: string; title: string }) {
+  const t = useT()
   return (
     <section className="subpage-card wide">
-      <h2>{title}</h2>
-      <p>{subtitle}</p>
+      <h2>{t(title)}</h2>
+      <p>{t(subtitle)}</p>
       {children}
     </section>
+  )
+}
+
+function ProfileEditor({
+  profile,
+  setProfile,
+}: {
+  profile: WorkspaceProfile
+  setProfile: (updater: (current: WorkspaceProfile) => WorkspaceProfile) => void
+}) {
+  const t = useT()
+  function updateProfile(field: keyof WorkspaceProfile, value: string) {
+    setProfile((current) => ({ ...current, [field]: value }))
+  }
+
+  function uploadAvatar(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = () => updateProfile('avatar', String(reader.result ?? ''))
+    reader.readAsDataURL(file)
+  }
+
+  return (
+    <div className="profile-page-grid">
+      <div className="profile-avatar-card">
+        <div className="profile-avatar-large">
+          {profile.avatar ? <img alt="" src={profile.avatar} /> : <span>AG</span>}
+        </div>
+        <label className="compact-action import-action">
+          <Upload size={15} />
+          {t('Update photo')}
+          <input accept="image/*" onChange={uploadAvatar} type="file" />
+        </label>
+      </div>
+      <div className="panel-form profile-form">
+        <label>
+          {t('Name')}
+          <input value={profile.name} onChange={(event) => updateProfile('name', event.target.value)} />
+        </label>
+        <label>
+          {t('Role')}
+          <input value={profile.role} onChange={(event) => updateProfile('role', event.target.value)} />
+        </label>
+        <label>
+          {t('Email')}
+          <input value={profile.email} onChange={(event) => updateProfile('email', event.target.value)} />
+        </label>
+        <label>
+          {t('Timezone')}
+          <input value={profile.timezone} onChange={(event) => updateProfile('timezone', event.target.value)} />
+        </label>
+      </div>
+    </div>
   )
 }
 
@@ -1968,7 +2565,7 @@ function DataPage({
           emptyText={emptyText}
           onAction={(id, label) => {
             onAction?.(id)
-            action(`${label}: ${id}`)
+            action(label === 'Remove' ? '' : label)
           }}
           rows={rows}
         />
@@ -1989,6 +2586,7 @@ function DataTable({
   onAction?: (id: string, label: string) => void
   rows: Array<{ id: string; cells: string[] }>
 }) {
+  const t = useT()
   return (
     <div className="data-table-wrap">
       <table className="data-table">
@@ -2009,11 +2607,11 @@ function DataTable({
                   <td>
                     <button
                       className="compact-action danger-compact"
+                      aria-label={t(buttonLabel)}
                       onClick={() => onAction?.(row.id, buttonLabel)}
                       type="button"
                     >
                       <Trash2 size={14} />
-                      {buttonLabel}
                     </button>
                   </td>
                 ) : null}
@@ -2027,9 +2625,10 @@ function DataTable({
 }
 
 function Metric({ title, value }: { title: string; value: string }) {
+  const t = useT()
   return (
     <div className="placeholder-card metric-card">
-      <span>{title}</span>
+      <span>{t(title)}</span>
       <strong>{value}</strong>
     </div>
   )
@@ -2042,6 +2641,7 @@ function ActionRow({
   actions: Array<{ danger?: boolean; label: string; onClick: () => void }>
   extra?: ReactNode
 }) {
+  const t = useT()
   return (
     <div className="action-row">
       {actions.map((item) => (
@@ -2051,7 +2651,7 @@ function ActionRow({
           onClick={item.onClick}
           type="button"
         >
-          {item.label}
+          {t(item.label)}
         </button>
       ))}
       {extra}
@@ -2060,10 +2660,11 @@ function ActionRow({
 }
 
 function ImportCsvButton({ onChange }: { onChange: (event: ChangeEvent<HTMLInputElement>) => void }) {
+  const t = useT()
   return (
     <label className="compact-action import-action">
       <Upload size={15} />
-      Import CSV
+      {t('Import CSV')}
       <input accept=".csv,text/csv" onChange={onChange} type="file" />
     </label>
   )
@@ -2080,10 +2681,11 @@ function EditableCard({
   text: string
   title: string
 }) {
+  const t = useT()
   return (
     <div className="placeholder-card editable-card">
       <div className="editable-card-head">
-        <strong>{title}</strong>
+        <strong>{t(title)}</strong>
         <button aria-label={`Remove ${title}`} onClick={onRemove} type="button">
           <Trash2 size={14} />
         </button>
@@ -2094,10 +2696,11 @@ function EditableCard({
 }
 
 function EmptyState({ text, title }: { text: string; title: string }) {
+  const t = useT()
   return (
     <div className="empty-state">
-      <strong>{title}</strong>
-      <span>{text}</span>
+      <strong>{t(title)}</strong>
+      <span>{t(text)}</span>
     </div>
   )
 }
@@ -2113,16 +2716,17 @@ function WorkflowGrid({
     title: string
   }>
 }) {
+  const t = useT()
   return (
     <div className="workflow-grid">
       {cards.map((card) => (
         <section className="workflow-card" key={`${card.eyebrow}-${card.title}`}>
-          <span>{card.eyebrow}</span>
-          <strong>{card.title}</strong>
-          <p>{card.text}</p>
+          <span>{t(card.eyebrow)}</span>
+          <strong>{t(card.title)}</strong>
+          <p>{t(card.text)}</p>
           {card.actionLabel && card.onAction ? (
             <button className="link-button" onClick={card.onAction} type="button">
-              {card.actionLabel}
+              {t(card.actionLabel)}
             </button>
           ) : null}
         </section>
@@ -2140,10 +2744,13 @@ function SettingToggle({
   label: string
   onClick: () => void
 }) {
+  const t = useT()
   return (
-    <button className="setting-toggle" onClick={onClick} type="button">
-      <span>{label}</span>
-      <strong>{active ? 'On' : 'Off'}</strong>
+    <button aria-pressed={active} className={`setting-toggle ${active ? 'active' : ''}`} onClick={onClick} type="button">
+      <span>{t(label)}</span>
+      <strong aria-hidden="true">
+        <i />
+      </strong>
     </button>
   )
 }
@@ -2159,10 +2766,11 @@ function NavItem({
   label: string
   onClick: () => void
 }) {
+  const t = useT()
   return (
     <button aria-current={active ? 'page' : undefined} className={active ? 'active' : ''} onClick={onClick} type="button">
       {icon}
-      <span>{label}</span>
+      <span>{t(label)}</span>
     </button>
   )
 }
@@ -2182,6 +2790,7 @@ function SelectBox({
   options?: string[]
   value: string
 }) {
+  const t = useT()
   const [open, setOpen] = useState(false)
   const [menuPosition, setMenuPosition] = useState({ left: 0, top: 0, width: 0 })
   const buttonRef = useRef<HTMLButtonElement | null>(null)
@@ -2212,17 +2821,17 @@ function SelectBox({
 
   return (
     <div className="select-box">
-      <span>{label}</span>
+      <span>{t(label)}</span>
       <button
         aria-expanded={open}
         aria-label={value}
-        className="select-control"
+        className={`select-control ${open ? 'open' : ''}`}
         onClick={toggleMenu}
         ref={buttonRef}
         type="button"
       >
         {icon}
-        <strong>{value}</strong>
+        <strong>{t(value)}</strong>
         <ChevronDown size={17} />
       </button>
       {open && menuOptions.length > 0
@@ -2241,7 +2850,8 @@ function SelectBox({
               }}
               type="button"
             >
-              {option}
+              {isPlatform(option) ? <PlatformBadge platform={option} /> : null}
+              {t(option)}
             </button>
           ))}
         </div>,
@@ -2253,14 +2863,22 @@ function SelectBox({
 }
 
 function PlatformBadge({ platform }: { platform: Platform }) {
-  return <span className={`platform-badge ${platform.toLowerCase()}`}>{platformLabel(platform)}</span>
+  return (
+    <span className={`platform-badge ${platform.toLowerCase()}`}>
+      <img alt={platform} src={platformIconPath(platform)} />
+    </span>
+  )
 }
 
-function platformLabel(platform: Platform) {
-  if (platform === 'LinkedIn') return 'in'
-  if (platform === 'YouTube') return 'YT'
-  if (platform === 'Instagram') return 'IG'
-  return 'TT'
+function isPlatform(value: string): value is Platform {
+  return platforms.includes(value as Platform)
+}
+
+function platformIconPath(platform: Platform) {
+  if (platform === 'LinkedIn') return '/assets/social/linkedin.jpg'
+  if (platform === 'YouTube') return '/assets/social/youtube.jpg'
+  if (platform === 'Instagram') return '/assets/social/instagram.jpg'
+  return '/assets/social/tiktok.jpg'
 }
 
 function panelLabel(panel: PanelKey) {
@@ -2271,8 +2889,8 @@ function panelLabel(panel: PanelKey) {
     notifications: 'Workspace notifications',
     patterns: 'Pattern evidence',
     profile: 'Update profile',
-    shortcuts: 'Demo shortcuts',
-    sources: 'Data sources',
+    dataSources: 'Data sources',
+    shortcuts: 'Shortcuts',
   }
   return labels[panel]
 }
