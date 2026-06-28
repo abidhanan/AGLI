@@ -556,9 +556,9 @@
 .filter-row {
   display: grid;
   grid-template-columns:
-    minmax(0, 1.1fr) minmax(0, 1.1fr) minmax(0, 1.1fr)
-    minmax(0, 1.1fr) 200px 102px 136px;
-  gap: 16px;
+    repeat(4, minmax(220px, 1fr))
+    minmax(210px, 0.85fr) 128px 160px;
+  gap: 18px;
   padding: 13px 0 14px;
   min-width: 0;
   overflow: visible;
@@ -1916,13 +1916,19 @@
   resize: vertical;
 }
 
+@media (max-width: 1760px) {
+  .filter-row {
+    grid-template-columns: repeat(4, minmax(220px, 1fr));
+  }
+}
+
 @media (max-width: 1500px) {
   .prototype-shell {
     grid-template-columns: 220px minmax(0, 1fr);
   }
 
   .filter-row {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(220px, 1fr));
   }
 
   .workspace-grid {
@@ -1944,6 +1950,12 @@
   .filter-button,
   .save-button {
     align-self: stretch;
+  }
+}
+
+@media (max-width: 1180px) {
+  .filter-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -2088,10 +2100,17 @@
   }
 
   .topbar-user {
-    min-width: 54px;
-    width: 54px;
-    grid-template-columns: 30px auto;
-    padding: 0 6px;
+    min-width: 70px;
+    width: 70px;
+    grid-template-columns: 30px 16px;
+    justify-content: center;
+    gap: 6px;
+    padding: 0 8px;
+  }
+
+  .topbar-user > svg {
+    justify-self: center;
+    margin: 0;
   }
 
   .topbar-user div {

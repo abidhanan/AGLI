@@ -1888,11 +1888,6 @@ function UtilityPanel({
           </div>
         ) : null}
 
-        <div className="utility-panel-actions">
-          <button className="secondary-action" onClick={close} type="button">
-            {t('Close')}
-          </button>
-        </div>
       </div>
     </div>
   )
